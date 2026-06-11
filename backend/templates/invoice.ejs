@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .company-info {
+            line-height: 1.4;
+        }
+        .company-title {
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .logo-placeholder {
+            font-weight: bold;
+            font-size: 24px;
+            color: #d32f2f;
+            display: flex;
+            align-items: center;
+        }
+        .logo-placeholder img {
+            height: 70px;
+            width: auto;
+            object-fit: contain;
+        }
+        .table-section {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+        .table-section th, .table-section td {
+            border: 1px solid #d32f2f;
+            padding: 4px;
+            text-align: left;
+        }
+        .bg-red {
+            background-color: #e53935;
+            color: white;
+            font-weight: bold;
+        }
+        .bg-light-red {
+            background-color: #ffcdd2;
+            color: #333;
+            font-weight: bold;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .w-15 { width: 15%; }
+        .w-20 { width: 20%; }
+        .w-25 { width: 25%; }
+        .w-35 { width: 35%; }
+        .w-50 { width: 50%; }
+        .grid-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .col-left, .col-right {
+            width: 49%;
+        }
+        .small-text {
+            font-size: 8px;
+        }
+        .inspection-diagram {
+            border: 1px solid #d32f2f;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            margin-bottom: 5px;
+            padding: 4px;
+        }
+        .inspection-diagram img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+        }
+        .footer-legal {
+            margin-top: 15px;
+            font-size: 8px;
+            line-height: 1.2;
+            page-break-before: always;
+        }
+        .legal-title {
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+        .legal-section {
+            margin-bottom: 10px;
+        }
+        .special-conditions {
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        .declaration {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.6;
+        }
+        .declaration .dec-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .bank-line {
+            margin-top: 14px;
+            font-weight: bold;
+            font-size: 13px;
+            color: #333;
+            text-align: center;
+        }
+        .important-line {
+            margin: 10px auto 0;
+            font-weight: bold;
+            font-size: 13px;
+            color: #d32f2f;
+            text-align: center;
+            border: 2px solid #d32f2f;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .important-wrap {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .sign-img {
+            height: 55px;
+            max-width: 280px;
+            vertical-align: middle;
+        }
+        .agreement {
+            page-break-before: always;
+            font-size: 10.5px;
+            line-height: 1.5;
+            color: #000;
+            text-align: justify;
+        }
+        .agreement .doc-title {
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 2px;
+            color: #d32f2f;
+        }
+        .agreement .part-title {
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .agreement h3 {
+            font-size: 12.5px;
+            font-weight: bold;
+            margin: 10px 0 4px;
+            color: #d32f2f;
+        }
+        .agreement p {
+            margin: 4px 0;
+        }
+        .agreement .term {
+            font-weight: bold;
+        }
+        .agreement input[type="checkbox"] {
+            accent-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="company-info">
+            <div class="company-title">RENTAL AGREEMENT / TAX INVOICE<br>KHAKH RENTALS</div>
+            Level 23, Tower 5, Collins Square, 727 Collins Street, Australia<br>
+            ABN : 16609767071<br>
+            Email : khakhrentals@yahoo.com<br>
+            Phone : 1300911600
+        </div>
+        <div class="logo-placeholder">
+            <% if (typeof logoSrc !== 'undefined' && logoSrc) { %>
+                <img src="<%= logoSrc %>" alt="KHAKH RENTALS" />
+            <% } else { %>
+                KHAKH RENTALS
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Top Info -->
+    <table class="table-section">
+        <tr>
+            <td class="bg-red w-25">INVOICE NO.</td>
+            <td class="w-25"><%= data.invoiceNo %></td>
+            <td class="bg-red w-25">INVOICE DATE</td>
+            <td class="w-25"><%= data.invoiceDate %></td>
+        </tr>
+        <tr>
+            <td class="bg-red">THIRD PARTY CLAIM #</td>
+            <td><%= data.thirdPartyClaimNo %></td>
+            <td class="bg-red">CLIENT REGISTRATION</td>
+            <td><%= data.clientRegistration %></td>
+        </tr>
+    </table>
+
+    <div class="grid-container">
+        <!-- Left Column: Hirer & Inspection -->
+        <div class="col-left">
+            <table class="table-section">
+                <tr><th colspan="4" class="bg-red">HIRER & AUTHORISED DRIVER</th></tr>
+                <tr><td class="bg-light-red">Name</td><td colspan="3"><%= data.driver.fullName %></td></tr>
+                <tr><td class="bg-light-red">Street Address</td><td colspan="3"><%= data.driver.streetAddress %></td></tr>
+                <tr><td class="bg-light-red">Suburb</td><td colspan="3"><%= data.driver.suburb %></td></tr>
+                <tr>
+                    <td class="bg-light-red">State</td><td><%= data.driver.state %></td>
+                    <td class="bg-light-red">Post Code</td><td><%= data.driver.postCode %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Home Ph</td><td><%= data.driver.homePhone %></td>
+                    <td class="bg-light-red">Mobile</td><td><%= data.driver.mobilePhone %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Work</td><td><%= data.driver.workPhone %></td>
+                    <td class="bg-light-red">DOB</td><td><%= data.driver.dob %></td>
+                </tr>
+                <tr><td class="bg-light-red">Email</td><td colspan="3"><%= data.driver.email %></td></tr>
+                <tr>
+                    <td class="bg-light-red">Licence No.</td><td><%= data.driver.licenceNo %></td>
+                    <td class="bg-light-red">State of Issue</td><td><%= data.driver.stateOfIssue %></td>
+                </tr>
+                <tr><td class="bg-light-red">Licence Expiry</td><td colspan="3"><%= data.driver.licenceExpiry %></td></tr>
+            </table>
+
+            <table class="table-section" style="margin-top: 5px;">
+                <tr><th class="bg-red" colspan="4">DELIVERY VEHICLE INSPECTION</th></tr>
+            </table>
+            
+            <div class="inspection-diagram">
+                <% if (typeof inspectionDiagramSrc !== 'undefined' && inspectionDiagramSrc) { %>
+                    <img src="<%= inspectionDiagramSrc %>" alt="Vehicle Condition Diagram" />
+                <% } else { %>
+                    [ Vehicle Wireframe Diagram ]
+                <% } %>
+            </div>
+
+            <table class="table-section">
+                <tr><td class="bg-light-red" colspan="4">Inspection Completed By</td></tr>
+                <tr>
+                    <td class="bg-light-red">Fuel Level</td><td><%= data.inspection.fuelLevel %></td>
+                    <td class="bg-light-red">Fuel Type</td><td><%= data.inspection.fuelType %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Condition</td><td><%= data.inspection.condition %></td>
+                    <td class="bg-light-red">HIRER INITIAL</td><td></td>
+                </tr>
+            </table>
+            <div style="color:red; font-weight:bold; margin-top: 2px; font-size: 13px;">
+                *Hirers will be charged $50 for vehicles returned uncleaned
+            </div>
+        </div>
+
+        <!-- Right Column: Rental Details, Repairer, Third Party, Charges -->
+        <div class="col-right">
+            <table class="table-section">
+                <tr><th colspan="4" class="bg-red">RENTAL DETAILS</th></tr>
+                <tr>
+                    <td class="bg-light-red">Make</td><td><%= data.vehicle.make %></td>
+                    <td class="bg-light-red">Model</td><td><%= data.vehicle.model %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Colour</td><td><%= data.vehicle.colour %></td>
+                    <td class="bg-light-red">Registration</td><td><%= data.vehicle.registration %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Date Out</td><td><%= data.rental.dateOut %></td>
+                    <td class="bg-light-red">Date Return</td><td><%= data.rental.dateReturn %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Kms Out</td><td><%= data.rental.kmsOut %></td>
+                    <td class="bg-light-red">Kms Return</td><td><%= data.rental.kmsReturn %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Time Out</td><td><%= data.rental.timeOut %></td>
+                    <td class="bg-light-red">Time Return</td><td><%= data.rental.timeReturn %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Excess Amount</td><td>$<%= data.rental.excessAmount %></td>
+                    <td class="bg-light-red">Total Days</td><td><%= data.rental.totalDays %></td>
+                </tr>
+            </table>
+
+            <table class="table-section">
+                <tr><th colspan="2" class="bg-red">Repairer Details</th></tr>
+                <tr><td class="bg-light-red w-35">Repairer Name</td><td><%= data.repairer.name %></td></tr>
+                <tr><td class="bg-light-red">Phone</td><td><%= data.repairer.phone %></td></tr>
+            </table>
+
+            <table class="table-section">
+                <tr><th colspan="2" class="bg-red">Third Party Details</th></tr>
+                <tr><td class="bg-light-red w-35">Insurance Company</td><td><%= data.thirdParty.insuranceCompany %></td></tr>
+                <tr><td class="bg-light-red">Claim Number</td><td><%= data.thirdParty.claimNumber %></td></tr>
+                <tr><td class="bg-light-red">Driver Name</td><td><%= data.thirdParty.driverName %></td></tr>
+                <tr><td class="bg-light-red">Damaged Vehicle Rego</td><td><%= data.thirdParty.damagedVehicleRego %></td></tr>
+                <tr><td class="bg-light-red">Date of Accident</td><td><%= data.thirdParty.dateOfAccident %></td></tr>
+            </table>
+
+            <table class="table-section">
+                <tr><th colspan="3" class="bg-red">RENTAL CHARGES</th></tr>
+                <tr>
+                    <td class="bg-light-red w-35">Daily Rental</td>
+                    <td class="text-center"><%= data.billing.dailyRentalDays %> Days x $<%= data.billing.dailyRentalRate %></td>
+                    <td class="text-right">$<%= (data.billing.dailyRentalDays * data.billing.dailyRentalRate).toFixed(2) %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Excess Reduction</td>
+                    <td class="text-center"><%= data.billing.excessReductionDays %> Days x $<%= data.billing.excessReductionRate %></td>
+                    <td class="text-right">$<%= (data.billing.excessReductionDays * data.billing.excessReductionRate).toFixed(2) %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red">Registration Recovery Fee</td>
+                    <td class="text-center"><%= data.billing.registrationRecoveryDays %> Days x $<%= data.billing.registrationRecoveryRate %></td>
+                    <td class="text-right">$<%= (data.billing.registrationRecoveryDays * data.billing.registrationRecoveryRate).toFixed(2) %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red" colspan="2">Delivery</td>
+                    <td class="text-right">$<%= data.billing.deliveryCharge.toFixed(2) %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red" colspan="2">Sub Total</td>
+                    <td class="text-right">$<%= data.billing.subTotal.toFixed(2) %></td>
+                </tr>
+                <tr>
+                    <td class="bg-light-red" colspan="2">GST (10%)</td>
+                    <td class="text-right">$<%= data.billing.gst.toFixed(2) %></td>
+                </tr>
+                <tr>
+                    <td class="bg-red" colspan="2">Total</td>
+                    <td class="text-right bg-red">$<%= data.billing.grandTotal.toFixed(2) %></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="special-conditions">
+        Special Condition:<br>
+        1. Vehicle to be returned as per rental vehicle delivery fuel level. Cars must be returned in a clean condition.<br>
+        2. No pets, no smoking or a $50 cleaning fee will apply. All fines will incur a $50 administration fee.<br>
+        3. This vehicle is registered for tools. You are liable for any additional charges (e.g. tolls) you incur.
+    </div>
+
+    <!-- Declaration (page 1) -->
+    <div class="declaration">
+        <div class="dec-title">Declaration:</div>
+        &bull; I have read, understand and agree to this document;<br>
+        &bull; I have read, understand and agree to the Terms &amp; conditions of Use;<br>
+        &bull; I confirm that to the best, of my knowledge, the information I have provided is true, complete and correct.
+        <br><br>
+        Hire's Signature:
+        <% if (data.signature) { %>
+            <img src="<%= data.signature %>" class="sign-img" alt="signature" />
+        <% } else { %>
+            ______________________________
+        <% } %>
+    </div>
+    <div class="bank-line">Account name: Khakh Rentals, BSB: 063-185, Account number: 1127 0117</div>
+    <div class="important-wrap">
+        <div class="important-line">IMPORTANT: A COPY OF YOUR LICENCE MUST ACCOMPANY THIS RENTAL AGREEMENT</div>
+    </div>
+
+    <!-- Full Agreement (Part A &amp; Part B) -->
+    <div class="agreement">
+        <div class="doc-title">AGREEMENT AND AUTHORITY TO ACT</div>
+        <div class="part-title">Part - A</div>
+
+        <p>This agreement and authority to act between the owner Khakh Brother Pty Ltd. ABN: 16 609 767 071 (&ldquo;Khakh Rentals&rdquo;) is not regulated by the consumer credit code, being an exempt agreement. It deals with the owner's obligation with respect to the higher vehicle issued as the result of road traffic incident. The owner should read it, and all accompanying documentation, carefully before signing.</p>
+
+        <h3>Definitions:</h3>
+        <p><span class="term">Additional charges:</span> The amounts payable for tolls, traffic or parking infringement charges, fuel, cleaning, administration fess, excess, damage or any other amount for which the hirer is liable for breach of agreement.</p>
+        <p><span class="term">Agreed rate:</span> An interest rate equivalent to the RBA cash rate plus 4%.</p>
+        <p><span class="term">Agreement:</span> This agreement and authority to act, the terms and condition of use and the rental agreement.</p>
+        <p><span class="term">Credit hire period:</span> Either: (a) In the event that the damage vehicle is deemed by the TP to be repairable, the repair period or (b) In the event that the damaged vehicle is deemed by the TP to be a write-off, until the vehicle can be replace, or (c) such other period as may be determined, subject to a maximum duration of 90 days.</p>
+        <p><span class="term">Credit period:</span> The period of 90 days from the date of issuance of Khakh Rentals's tax invoice.</p>
+        <p><span class="term">Damage vehicle:</span> The owner's vehicle rendered unroadworthy as a result of an accident which the owner alleges was the fault of a Third party.</p>
+        <p><span class="term">Higher Charges:</span> The amounts payable pursuant to the rental agreement which specifies the contract rates for the provision of the higher vehicle excluding the additional charges.</p>
+        <p><span class="term">Owner:</span> The owner or the registered operator of the not at-fault damaged vehicle and reffered to here in as the &ldquo;hirer&rdquo;.</p>
+        <p><span class="term">RA:</span> The rental agreement accompanying this agreement.</p>
+        <p><span class="term">RBA:</span> Reserve Bank of Australia.</p>
+        <p><span class="term">Recovery cost:</span> The costs and the expenses incurred by Khakh Rentals in respect of any action taken to recover the higher charges from the TP.</p>
+        <p><span class="term">TP:</span> The third party and/or the third parties insurer.</p>
+        <p><span class="term">Vehicle:</span> The vehicle provided to the owner by Khakh Rentals pursuant to the agreement.</p>
+        <p><span class="term">We or us or our or Khakh Rentals:</span> Means Khakh Brothers Pty Ltd. Trading as Khakh Rentals.</p>
+
+        <h3>Terms &amp; Conditions:</h3>
+        <p>The hirer has requested, and Khakh Rentals has agreed, that Khakh Rentals will provide the vehicle to the hirer under the terms of agreement. The hirer has a need for a replacement vehicle. Khakh Rentals will make the vehicle available to the hirer to credit hire period. On expiry of the credit hire period the hirer will be obliged to return the vehicle to the Khakh Rentals forthwith. Khakh Rentals agrees to provide the vehicle to the hirer for the credit hire period as shown on the Khakh Rentals's tax invoice at the contract rate set out in the RA, on credit for the credit period. Khakh Rentals will use its best endeavours during the credit period to recover the higher charges from the third party. On condition that the hirer fulfils their obligation under the agreement, the hirer will be release form liability for the higher charges except for the additional charges for which hirer sell remain liable. The hirer authorizes Khakh Rentals, its nominated agents, representatives and solicitors to bank relevant cheques made payable to the hirer their or Khakh's nominated trust account. The hirer irrevocably appoints Khaks (and/or its nominated debt recovery agent) as the hirer's agent representative and attorney, to recover the hire charges by whatever means including, in Khakh Rentals absolute discretion. The commencement and carrying-on of legal proceeding in the name of the hirer. Khakh Rentals may retain and apply all such recovered hire charges and recovery costs (in whole or in part) to the hire charges and recovery costs. The hirer understands and accept that Khakh Rentals shall appoint and give instruction on behalf of the hirer to legal advisors in respect of the recovery process. The hirer warrants to Khakh Rentals that he or she has not relied on any promise, representation, inducement agreeing to the obligations in the agreement and in committing to the recovery process as at the date of agreement, the higher charge estimated because the hirer is unable to advice the duration of the repairs to or the replacement of the damaged vehicles. The final hire charges will not be known until the expiry of the credit hire period.</p>
+
+        <h3>Obligation and termination:</h3>
+        <p>The hirer is obliged to do the following:</p>
+        <p>a. The hirer must act in the best interest of the Khakh Rentals;</p>
+        <p>b. The hirer must not delayed or hold up the timely recovery of the hire charges from the TP.</p>
+        <p>c. The hirer must promptly provide all documents reasonably required by TP;</p>
+        <p>d. The hirer must be open and frank with Khakh Rentals and not mislead Khakh Rentals in any way;</p>
+        <p>e. The hirer must not breach any of the terms of the agreement;</p>
+        <p>f. The hirer must not release or purpote to release by signing a form of lease or otherwise, the TP from any of the hirer's rights in respect to the accident;</p>
+        <p>g. The hirer must not provide all reasonable assistant to Khakh Rentals in respect of implementation and conduct of the recovery process which the hirer acknowledges may require the hirer to provide statements, documents and appear in court as witness; and</p>
+        <p>h. The hirer must promptly inform Khakh Rentals when the repair to the damaged vehicle are complete or when the hirer has receive a notice of total loss settlement; If in the reasonable opinion of Khakh Rentals the hirer in breach of any of these obligation, Khakh Rentals may at any time terminate the agreement. Khakh Rentals may also terminate the agreement at any time if Khakh Rentals is of reasonable opinion that:</p>
+        <p>i. The hirer makes any admission of liability in respect to an accident; or</p>
+        <p>j. The hire charges will not be fully recoverable from the TP.</p>
+        <p>If the agreement is terminated for any of the reason stated in the points (A) to (G) or (I) above then the hire charges, additional charges and the recovery costs will become immediately due and payable, by the hirer, to Khakh Rentals. If the agreement is terminated for the reason stated in point (H) the hire charges for any day or days after the repair were completed or after the hirer received notification of total loss settlement, the additional charges and the recovery charges will become immediately due and payable.</p>
+
+        <h3>Privacy statement and consent</h3>
+        <p>Khakh Brothers Pty Ltd. ('we','us','ours') collect your personal information for the purposes set out in this privacy statement and consent. Personal information is information or an opinion about an identified, or reasonably identifiable, individual. Personal Information may be sensitive information, which includes health information and information about racial or ethinic origin, political opinions membership of a trade union or political association, religious, beliefs, affiliation, philosophical beliefs, sexual preferences and criminal records.</p>
+
+        <h3>Providing information about another information</h3>
+        <p>When you give us personal information about another person you represent that you are authorized to do so and agreed to inform the person that we have collected their information as part of this application and of the contents of this privacy statement and consent.</p>
+
+        <h3>Purpose for collecting personal information</h3>
+        <p>We collect your personal information in order to provide you with our accident replacement vehicle service.</p>
+        <p>We may install tellymetics devices or similar into the vehicle that may track the location of the vehicle and consent to such installation and tracking.</p>
+        <p>We may also collect your personal information for the following purposes:</p>
+        <p>To assess and process your application for an accident replacement;</p>
+        <p>To facilitate claims on your behalf for the costs of our services with your insurer or the insurer of the at-fault part;</p>
+        <p>To execute instruction;</p>
+        <p>To manage our relationship with you (online or in person);</p>
+        <p>To comply with legislative or regulatory requirements;</p>
+        <p>To identify you;</p>
+
+        <div class="part-title">Part - B</div>
+        <div class="doc-title">INTERPRETING YOUR RENTAL AGREEMENT</div>
+        <p>The Rental Agreement (&quot;Rental Agreement&quot;) between Khakh Rentals and You is made on the date shown on the Rental Document You have signed in respect of the Vehicle (&quot;Rental Agreement&quot;), and is made up of that Rental Document and these Terms and Conditions.</p>
+        <p>In these Terms and Conditions:</p>
+        <p><span class="term">&quot;Australian Consumer Law&quot;</span> means the Australian Consumer Law set out in Schedule 2 of the Competition and Consumer Act 2010 (cth) as amended or replaced from time to time.</p>
+        <p><span class="term">&quot;Authorised Driver / Joint Renter&quot;</span> means:</p>
+        <p>an additional driver who is noted on the Rental Agreeement as an Authorised Driver or Joint Renter.</p>
+        <p>Your spouse;</p>
+        <p>Your employer for a fellow employee, if either is engaged in activities that are incidental to Your business duties.</p>
+        <p><span class="term">Collection Costs'</span> means Khakh Rentals reasonable costs of collecting unpaid rental charges from You (including Khakh Rentals legal costs) and Khakh Rentals Pty Ltd administration fee of $132.00 (incl GST) and its debt collection agents fee equals to 12% of the unpaid rental charges;</p>
+        <p><span class="term">'Excess Amount'</span> means the amount shown as Excess Amount on the Rental Agreement.</p>
+        <p><span class="term">'Excess Reduction'</span> means the product called Excess Reduction that You may purchase before the rental commences to reduce any excess amount payable;</p>
+        <p><span class="term">'Loss Damage Waiver'</span> means the loss damage waiver described on the Rental Agreement as LDW which reduces Your financial responsibility for loss damage to the Vehicle to the Excess Amount;</p>
+        <p><span class="term">'Overhead Damage'</span> means damage (excluding hail damage) to the Vehicle above the top of the door seal or the top of the front and back windscreens, or damage to the third party property, caused by the Vehicle coming into contact with anything overhanging or obstructing its path, objects being placed on the roof of the Vehicle, or You or any person standing or sitting on the roof of the Vehicle;</p>
+        <p><span class="term">&quot;Khakh Rentals&quot;</span> means Khakh Rentals Pty Ltd ABN 16609767071</p>
+        <p><span class="term">'Rental Charges'</span> means the fees, costs, amounts and charges specified on the Rental Agreement.</p>
+        <p><span class="term">&quot;Rental Period&quot;</span> means the period commencing on the date shown on the Rental Document and ending on the date that You return the Vehicle to Khakh Rentals;</p>
+        <p><span class="term">&quot;Substitute Vehicle Insurance&quot;</span> means a policy of motor vehicle insurance held by You or an Authorised Driver which covers You or the Authorised Driver while You or the Authorised Driver use the Vehicle as a substitute for the vehicle insured under that policy;</p>
+        <p><span class="term">&quot;Vehicle&quot;</span> means the vehicle described on the Rental Document (or any substitue vehicle), and includes its parts, components, accessories and contents supplied by Khakh Rentals;</p>
+        <p><span class="term">&quot;You&quot; or &quot;Your&quot;</span> refers to the person(s) with whome the Rental Agreement is made.</p>
+
+        <h3>1. DRIVER</h3>
+        <p>1.1 You agree, acknowledge and warrant that:</p>
+        <p>(a) only You or an Authorised Driver will drive the Vehicle; and</p>
+        <p>(b) You and any Authorised Driver are currently licensed to drive the Vehicle and have been so licenced to drive for a period of 12 months or longer (excluding any time under a learner's permit or a provisional licence); and</p>
+        <p>(c) You and the Authorised Driver are not under 21 years age; and</p>
+        <p>(d) You and the Authorised Driver have not had Your driver's licence cancelled, endorsed or suspended within the last three years.</p>
+
+        <h3>2. WHERE YOU CAN AND CANNOT DRIVE THE VEHICLE</h3>
+        <p>2.1 You and any Authorised Driver must only use the Vehicle on a road, which is properly formed and constructed as a sealed, metalled or graded gravel road.</p>
+        <p>2.2 You and any Authorised Driver must not, unless authorised in writing by Khakh Rentals, drive or take the Vehicle: (a) to Kangaroo Island; however, if so authorised, You and any Authorised Driver must not drive the Vehicle between dusk and dawn outside the town limits;</p>
+        <p>(b) to Fraser Island, Bruny Island, Groote Eylandt, to Gove Peninsula, Tiwi Islands, Stradbroke Islands, Moreton Island, or any island off the coast of Australia;</p>
+        <p>(c) into or out of the Northern Territory, Tasmania, or to any points in Western Australia north of Carnarvon;</p>
+        <p>(d) in Queensland: (1) on Highway No. 27 beyond Chillagoe in a Westerly direction; (2) on Highway No. 1 beyond Normanton in a Southerly direction and no further North than Karumba; (3) if the Vehicle is a passenger vehicle or truck, beyond Cooktown to the North or Lakeland to the West and no further than Cape Tribulation on the Coast Road; (4) on the Coast Road from Helenvale to Cape Tribulation, or from Laura to Lakeland unless the Vehicle is a Four Wheel Drive;</p>
+        <p>(e) in the snow (at anytime and anywhere (including Tasmania));</p>
+        <p>(f) above the snow line in: (1) in New South Wales (being lindabyne); or (2) Victoria (being Bright), From the beginning of June until the end of September;</p>
+        <p>(g) on beaches or through streams, dams, rivers or flood waters;</p>
+        <p>(h) in the Northern Territory: (1) on the Jim Jim Falls Road to Jim Jim Falls and Twin Falls; or (2) outside any town or city limits between dusk and dawn.</p>
+        <p>(i) in Western Austraila: (1) to any parts North of Carnarvon; (2) on the Gibb River, Cape Leveque Road, Widdjana Gorge, Canning Stock Route, Gunbarrel Highway and Hollard Track; (3) beyond 100 kilometers of the Perth city limits between dusk and dawn; or (4) otherwise, outside any town or city limits between dusk and dawn outside any city limits between dusk and dawn; or</p>
+
+        <h3>3. USE OF THE VEHICLE</h3>
+        <p>3.1 You and any Authorised Driver must:</p>
+        <p>(a) not allow the Vehicle to be used for any illegal purpose, race, contest or performance test of any kind;</p>
+        <p>(b) not allow the Vehicle to be used to tow or push anything;</p>
+        <p>(c) not carry more passengers than may be properly accommodated by the seat belt restraints provided in the Vehicle, or carry a greater load than that for which it was built;</p>
+        <p>(d) not be under the influence of alcohol, drugs or have a blood alcohol content that exceeds the legal limit in the State or Territory in which the Vehicle is driven;</p>
+        <p>(e) not allow the Vehicle to be used to carry passengers for payment or reward of any kind;</p>
+        <p>(f) not use the Vehicle when it is damaged or unsafe;</p>
+        <p>(g) not use the Vehicle to transport goods, except in compliance with all necessary approvals, permits, licences and government requirements (to be obtained at Your cost) and in accordance with the Vehicle manufacturer's and Khakh Rentals's recommendations;</p>
+        <p>(h) not use the Vehicle for the conveyance or towing of any load which is incorrectly loaded or secured or is in excess of that for which the Vehicle was constructed;</p>
+        <p>(i) not, without Khakh Rentals's prior written consent, use the Vehicle to carry any inflammable substance which has a flash point under 22.8&deg;C or any other explosive or corrosive substances; and</p>
+        <p>(j) not use the Vehicle in contravention of any law.</p>
+        <p>3.2 You must pay for any unauthorised repairs to the Vehicle and for all parking and traffic infringements in respect of the Vehicle during the Rental Period</p>
+        <p>3.3 You and any Authorised Driver must not carry any animal or pet in the Vehicle.</p>
+        <p>3.4 You and any Authorised Driver must not drive the Vehicle if Khakh Rentals has so directed You and any Authorised Driver.</p>
+        <p>3.5 You and any Authorised Driver or any passenger must not smoke in the Vehicle.</p>
+
+        <h3>4. MAINTENANCE, SECURITY AND SAFETY</h3>
+        <p>4.1 You and any Authorised Driver must:</p>
+        <p>(a) maintain all of the Vehicle's engine oils and engine coolant levels to the manufacturer's specifications, as set out in the Vehicle's operations manual located in the glove box or otherwise as required to maintain the Vehicle's efficient performance;</p>
+        <p>(b) keep the Vehicle locked and the keys under Your or the Authorised Driver's personal control at all times; and</p>
+        <p>(c) comply with any applicable seat belt and child restraint laws.</p>
+        <p>4.2 You must not service the Vehicle or have repairs to the Vehicle carried out unless Khakh Rentals authorises You to do so. Khakh Rentals requires verification of the cost of repairs for audit and GST purposes. You should obtain an original tax invoice/receipt to assist Khakh Rentals. Khakh Rentals will reimburse You for any repairs to the vehicle authorised by it, provided that the cost of those repairs is verified to the extent that Khakh Rentals cannot verify the cost of repairs, Khakh Rentals will not reimburse You.</p>
+        <p>4.3 You and Khakh Rentals acknowledge that the Vehicle is generally in an undamaged condition except as otherwise stated on the Rental Document.</p>
+
+        <h3>5. LOSS DAMAGE WAIVER, DAMAGE AND LOSS OF PROPERTY</h3>
+        <p>5.1 Subject to this clause 5, and to the fullest extent permitted by applicable law, You are liable;</p>
+        <p>(a) for the loss of, and all damage to, the Vehicle; and</p>
+        <p>(b) for all damage to the property of any person: (i) which is caused or contributed to by You or an Authorised Driver; or (ii) which arises from the use of the Vehicle by You or an Authorised Driver.</p>
+        <p>This clause 5 does not apply to any damage or loss for which Khakh Rentals is liable to You under this Rental Agreement.</p>
+        <p>Remember that references to the &quot;Vehicle&quot; include all of its parts, components, accessories and contents (see the definition of &quot;Vehicle&quot; in clause 1).</p>
+        <p>5.2 Subject to clause 5.3, if:</p>
+        <p>(a) You accept the Loss Damage Waiver option on the Rental Document at the commencement of the Rental Period; and</p>
+        <p>(b) where applicable, You pay the excess shown on the Rental Document for each separate event involving damage to or loss of, the Vehicle or for each separate event involving damage to the property of any third party which is caused by or arises from the use of the Vehicle by You or an Authorised Driver, Khakh Rentals:</p>
+        <p>(c) waives Your liability under clause 5.1 for damage to the Vehicle or loss of the Vehicle;</p>
+        <p>(d) provided that You and any Authorised Driver are entitled to be indemnified under a policy of motor vehicle insurance provided by a registered insurer for Your and an Authorised Driver's legal liability to a third party for damage to the property of that third party which is caused by the use of the Vehicle by You or an Authorised Driver.</p>
+        <p>5.3 You must always pay, and clause 5.2 does not cover:</p>
+        <p>(a) the excess shown on the Rental Document if there is damage to or loss of the Vehicle or if there is damage to the property of any third party;</p>
+        <p>(b) the cost of rectifying any tyre damage not attributable to normal wear and tear;</p>
+        <p>(c) the cost of repairing any damage caused deliberately or recklessly by: (i) You; (ii) any other driver of the Vehicle; or (iii) any passenger carried during the Rental Period;</p>
+        <p>(d) the cost of repairing any damage to the Vehicle or to third party property caused by You or an Authorised Driver using, or permitting the Vehicle to be used, in any area prohibited by the Rental Agreement;</p>
+        <p>(e) the cost of repairing overhead or roof damage caused by, but not limited to, contact between the Vehicle and objects overhanging or obstructing the path of the Vehicle; or</p>
+        <p>(f) the cost of repairing any water damage to the Vehicle or any underbody damage, and any resulting damage from that underbody damage, to the Vehicle.</p>
+        <p>(g) under any circumstances where the Vehicle has been refuelled with fuel other than that recommended by the Vehicle manufacturer.</p>
+        <p>(h) under any circumstances where the Vehicle and its keys are unsecured</p>
+        <p>5.4 For the purposes of this clause 5, You must pay for any damage or repair that may be reasonably determined by Khakh Rentals the amount which includes:</p>
+        <p>(a) the cost of repairs to the Vehicle or the market value of the Vehicle at the time of the loss or damage, whichever is the lesser;</p>
+        <p>(b) appraisal fees;</p>
+        <p>(c) towing, storage and recovery costs;</p>
+        <p>(d) a reasonable administrative fee reflecting the cost of making arrangements for repairs and towing and other administrative activities; and</p>
+        <p>(e) a per day loss of use fee based on the estimated downtime of the Vehicle</p>
+        <p>If the amount determined by Khakh Rentals and paid by You under this clause 5.4 exceeds the final cost of the damage or repair, Khakh Rentals will refund the difference to You.</p>
+
+        <h3>6. RETURN OF VEHICLE</h3>
+        <p>6.1 You must return the Vehicle to Khakh Rentals:</p>
+        <p>(a) to the place, on the date and by the time shown on the Rental Document (or sooner if required under clause 6.4);</p>
+        <p>(b) in the same condition as it was at the commencement of the Rental Period, fair wear and tear excepted;</p>
+        <p>(c) with a full tank of fuel (or otherwise pay to Khakh Rentals the cost to refuel the Vehicle).</p>
+        <p>6.2 You must return the Vehicle to a Khakh Rentals location during our normal business hours. If You return the vehicle later than the time shown on the rental document, You mus pay all additional rental charges.</p>
+        <p>6.3 If:</p>
+        <p>(a) You return the Vehicle on a date, or at a time, or to a place other than that shown on the Rental Document; or</p>
+        <p>(b) any special conditions set out in the &ldquo;Rates&rdquo; section on the Rental Document are breached, the rates shown on the Rental Document will not apply and You must pay the Khakh Rentals standard rate for the Vehicle for the Rental Period.</p>
+        <p>6.4 Khakh Rentals may request the immediate return of the Vehicle, or Khakh Rentals may re-take the Vehicle without notice, if Khakh Rentals reasonably suspects that:</p>
+        <p>(a) You have breached a term or condition of the Rental Agreement;</p>
+        <p>(b) damage to the Vehicle, or injury to persons or property is likely to occur; or</p>
+        <p>(c) the Vehicle will be involved in an industrial dispute; or</p>
+        <p>(d) the Vehicle may be used for an unlawful purpose;</p>
+        <p>You must also pay Khakh Rentals any cost it incurs as well as all costs and charges under the Rental Agreement for the period up to return/repossession of the Vehicle.</p>
+        <p>6.5 Khakh Rentals reserves the right to refuse hire of another vehicle to You following any incident or accident or where You have breached a condition of this Rental Agreement.</p>
+
+        <h3>7. CLAIMS AND PROCEEDINGS</h3>
+        <p>7.1 Where the use of the Vehicle by You, an Authorised Driver, or any other person results in an accident or claim, or where damage or loss is sustained to the Vehicle or any third party property, You and/or any Authorised Driver must:</p>
+        <p>(a) promptly report such incident to the local police;</p>
+        <p>(b) promptly report such incident in writing to Khakh Rentals;</p>
+        <p>(c) not, without Khakh Rentals's written consent, make or give any offer, promise of payment, settlement, waiver, release, indemnity or admission of liability;</p>
+        <p>(d) permit Khakh Rentals or its insurer at its own cost to bring, defend, enforce or settle any legal proceedings against a third party in Your name;</p>
+        <p>(e) permit or ensure that Khakh Rentals may claim in Your name or that of the Authorised Driver under any applicable Substitute Vehicle Insurance, and assist, and cause the Authorised Driver to assist, Khakh Rentals in making such a claim, including assigning any right to claim under any Substitute Vehicle Insurance to Khakh Rentals;</p>
+        <p>(f) complete and furnish to Khakh Rentals within a reasonable time any statement, information or assistance which Khakh Rentals or its insurer may reasonably require, including attending at a lawyer's office and at Court to give evidence.</p>
+
+        <h3>8. PAYMENT</h3>
+        <p>8.1 At the end of the Rental Period, You must pay Khakh Rentals on demand;</p>
+        <p>(a) all charges specified on the Rental Document and all charges payable under the Rental Agreement;</p>
+        <p>(b) any amount paid or payable by Khakh Rentals or You to any person arising out of Your use of the Vehicle or imposed on You or Khakh Rentals by any governmental or other competent authority (such as speeding, parking and traffic fines and toll charges); and</p>
+        <p>(c) any amount for which You are liable to Khakh Rentals under the Rental Agreement, in respect of a breach of the Rental Agreement or otherwise.</p>
+        <p>8.2 The minimum charge You must pay for the rental of the Vehicle is an amount equivalent to:</p>
+        <p>(a) one day's rental at the &quot;daily rate&quot; shown on the Rental Document (subject to clause 6.4); plus</p>
+        <p>(b) the amount payable for the number of kilometres driven during the Rental Period.</p>
+        <p>8.3 Distance charges are measured from the Vehicle's odometer.</p>
+        <p>8.4 You authorise Khakh Rentals to charge all moneys payable to Khakh Rentals under the Rental Agreement to Your credit card or charge account.</p>
+        <p>8.5 Khakh Rentals will pay any refund due to You by such method as Khakh Rentals may reasonably choose.</p>
+
+        <h3>9. LIABILITY OF KHAKH RENTALS</h3>
+        <p>9.1 Unless it is negligent, Khakh Rentals is not liable to any person, and You indemnify Khakh Rentals, for any loss of, or damage to, any property:</p>
+        <p>(a) stolen from the Vehicle or otherwise lost during the rental; or</p>
+        <p>(b) left in the Vehicle after its return to Khakh Rentals.</p>
+
+        <h3>10. CONSUMER RIGHTS STATEMENT</h3>
+        <p>All Your rights set out in this Rental Agreement are in addition to Your rights as a consumer under applicable consumer protection legislation, including the Australian Consumer Law. Your consumer rights are not excluded, modified, or restricted by this Rental Agreement. You can find out more about your consumer rights from consumer organisations and bodies such as the Australian Competition and Consumer Commission and State or Territory fair trading authorities.</p>
+
+        <h3>11. TERMINATION</h3>
+        <p>11.1 Either party may terminate the Rental Agreement at any time if the party commits a material breach of the Rental Agreement.</p>
+        <p>11.2 You may terminate the Rental Agreement at any time for any other reason.</p>
+        <p>11.3 If the Rental Agreement is terminated early for any reason other than a breach by Khakh Rentals, You agree to pay rental charges that reflect the actual duration of the rental. Such charges may be higher than those that apply for a longer rental period.</p>
+
+        <h3>12. MISCELLANEOUS</h3>
+        <p>12.1 The Rental Agreement contains the whole agreement between the parties.</p>
+        <p>12.2 Any waiver by a party of any one breach or default by the other party will not constitute a waiver of any other breach or default.</p>
+        <p>12.3 The agreement is governed by the law of the State or Territory of the Rental location. The partie submit to the non-exclusive jurisdiction of the courts of that State or Territory and any courts which may hear appeals from those courts in respect of any proceedings in connection with this agreement. The parties will not object to the exercise of jurisdiction by those courts on any basis.</p>
+
+        <h3>13. PRESUMPTIONS AND INTERPRETATION</h3>
+        <p>13.1 Unless the context otherwise requires:</p>
+        <p>(a) A word which denotes the singular denotes the plural and vice versa;</p>
+        <p>(b) Any gender denotes the other genders; and</p>
+        <p>(c) A person includes an individual, a body corporate and a government body.</p>
+        <p>13.2 Unless the context otherwise requires, a reference to:</p>
+        <p>(a) Any legislation any regulation or instrument under it and where amended, re-enacted or replaced means that amended, re-enacted or replaced legislation;</p>
+        <p>(b) Any other agreement or instrument, where amended or replaced, means that agreement or instrument as amended or replaced.</p>
+
+        <h3>Persons with whom personal information is exchanged</h3>
+        <p>We may exchange your personal information with any relevant insurer(s) in order to facilitate a claim on your behalf for the costs associated with hiring an accident replacement vehicle from us.</p>
+        <p>We may also disclose your personal information to:</p>
+        <p>our related bodies corporate, agents, contractors, service providers or external advisers</p>
+        <p>any other persons related to the accident (including the police)</p>
+        <p>insurers, reinsurers, loss adjusters, assessors and underwriters;</p>
+        <p>any organisation responsible for the processing of traffic related infringements or road tolls, to the extent that these fees apply to a Vehicle you have rented from us;</p>
+        <p>investigators</p>
+        <p>any person we consider necessary to execute your instructions</p>
+        <p>any person who is considering whether to acquire or who has acquired any part of our business, or the rights or obligations under the contract that we have with you; and</p>
+        <p>law enforcement, regulatory and government bodies as permitted or required by law in New Zealand, Australia or overseas. We may disclose your personal information to overseas recipients who provide services and products to us and for administrative, data storage or other business management purposes. It is not practicable to list all of the countries to which your information may be transmitted from time to time, but your personal information may be transmitted between Australia and New Zealand, and it is likely that other such countries will include the United Kingdom, the Philippines, the United States, Japan, Singapore and Hong Kong</p>
+
+        <h3>Your rights</h3>
+        <p>You have the right to request access and corrections to your personal information that we hold. You also have a right to make a complaint about the way in which we manage your personal information. Our Privacy Policy sets out how to make an access request or complaint, and how such requests or complaints are handled. Our Privacy Policy can be found at www.onyxcarrentals.com.au.</p>
+        <p>To gain access to, seek correction of, or to complain about the handling of the personal information that we hold about you contact our Privacy Officer at Privacy Officer, Eclipx Group, Level 32, 1 O'ConneII Street, Sydney NSW 2000, Australia or by email to privacy.officer@ecIipxgroup.com. You have a right to request our Privacy Policy in hard copy.</p>
+
+        <h3>Declaration Authority</h3>
+        <p>By signing below, I have read, understand and agree</p>
+        <p>That Khakh Rentals may (as permitted by law) collect, use and disclose my personal information (including sensitive information) in the ways set out in the Terms &amp; Conditions of Use (Privacy Statement and Consent) that Khakh Rentals may install telematics devices or similar into the vehicle that may track the location of the vehicle and consent to such installation and tracking.</p>
+        <p>To the terms of this document.</p>
+        <p>I authorise Khakh Rentals (and/or by its nominated agent or solicitor) to act on my behalf in respect to the recovery of the Hire Charges, and all Recovery Costs from the TP ask for any documents that may be required from the repairer of the Damaged Vehicle to enable prompt settlement of my Hire Charges; utilise and apply any cheque or monies received in settlement or payment of my claim against the TP to discharge any outstanding Hire Charges owed by me to Khakh Rentals, or recovery costs incurred by Khakh Rentals in respect to any action taken to recover my claim, subject to Khakh Rentals accounting to me for any surplus. In the event that accounts are not met in full within the Credit Period I agree that the Agreed Rate will be charged for each month or part month that they remain outstanding.</p>
+        <p style="margin-top:10px;">Full Name: <%= data.driver.fullName %></p>
+        <p style="margin-top:8px;">Signature:
+        <% if (data.acknowledged && data.signature) { %>
+            <img src="<%= data.signature %>" class="sign-img" alt="signature" />
+        <% } else { %>
+            ______________________
+        <% } %>
+        </p>
+        <p>Date: <%= data.invoiceDate %></p>
+
+        <div style="margin-top:10px;">
+            <p><input type="checkbox" checked> My Vehicle is not roadworthy</p>
+            <p><input type="checkbox" checked> I need a vehicle to transport family members and or other people in need.</p>
+            <p><input type="checkbox" checked> I do not have access to another suitable vehicle.</p>
+            <p><input type="checkbox" checked> I need a vehicle to attend church or religious meetings.</p>
+            <p><input type="checkbox" checked> I need a vehicle to commute to and from work</p>
+            <p><input type="checkbox" checked> Public transport is not a suitable replacement option.</p>
+            <p><input type="checkbox" checked> I need a vehicle for employment or business activities.</p>
+            <p><input type="checkbox" checked> My other daily needs include ______________________________</p>
+        </div>
+    </div>
+
+</body>
+</html>
