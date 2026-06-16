@@ -5,26 +5,50 @@ const { JSDOM } = require('jsdom');
 const htmlToPdfmake = require('html-to-pdfmake');
 const pdfMake = require('pdfmake/build/pdfmake');
 const pdfFonts = require('pdfmake/build/vfs_fonts');
+const { prepareHtmlForPdfMake } = require('./invoicePdfStyles');
 
 pdfMake.vfs = pdfFonts.pdfMake?.vfs || pdfFonts.vfs;
 
 const loadImageAsDataUri = (fileName) => {
-  try {
-    const buffer = fs.readFileSync(path.join(__dirname, '../assets/', fileName));
-    return `data:image/png;base64,${buffer.toString('base64')}`;
-  } catch (err) {
-    console.warn(`Image "${fileName}" not found, using fallback:`, err.message);
-    return '';
+  const candidates = [
+    path.join(__dirname, '../assets/', fileName),
+    path.join(__dirname, '../../frontend/src/assets/', fileName),
+  ];
+
+  for (const filePath of candidates) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const buffer = fs.readFileSync(filePath);
+        return `data:image/png;base64,${buffer.toString('base64')}`;
+      }
+    } catch {
+      // try next path
+    }
   }
+
+  console.warn(`Image "${fileName}" not found in backend/assets or frontend/src/assets`);
+  return '';
 };
 
 const logoSrc = loadImageAsDataUri('logo.png');
 const inspectionDiagramSrc = loadImageAsDataUri('inspection-diagram.png');
 
+const TABLE_LAYOUT = {
+  hLineWidth: () => 1,
+  vLineWidth: () => 1,
+  hLineColor: () => '#d32f2f',
+  vLineColor: () => '#d32f2f',
+  paddingLeft: () => 4,
+  paddingRight: () => 4,
+  paddingTop: () => 4,
+  paddingBottom: () => 4,
+};
+
 exports.generateInvoicePDF = async (data) => {
   try {
     const templatePath = path.join(__dirname, '../templates/invoice.ejs');
-    const html = await ejs.renderFile(templatePath, { data, logoSrc, inspectionDiagramSrc });
+    const renderedHtml = await ejs.renderFile(templatePath, { data, logoSrc, inspectionDiagramSrc });
+    const html = prepareHtmlForPdfMake(renderedHtml);
 
     const dom = new JSDOM(html);
     const content = htmlToPdfmake(html, {
@@ -35,8 +59,9 @@ exports.generateInvoicePDF = async (data) => {
         strong: { bold: true },
         em: { italics: true },
         h1: { fontSize: 16, bold: true, marginBottom: 5 },
-        h3: { fontSize: 12, bold: true, marginBottom: 4, marginTop: 8 },
-        p: { margin: [0, 2, 0, 2] },
+        h3: { fontSize: 12.5, bold: true, marginBottom: 4, marginTop: 8, color: '#d32f2f' },
+        p: { margin: [0, 2, 0, 2], fontSize: 10 },
+        li: { fontSize: 10 },
       },
     });
 
@@ -45,12 +70,16 @@ exports.generateInvoicePDF = async (data) => {
       pageMargins: [20, 20, 20, 20],
       defaultStyle: {
         font: 'Roboto',
-        fontSize: 8,
+        fontSize: 10,
         lineHeight: 1.15,
+        color: '#333333',
       },
       styles: {
-        'html-th': { bold: true, fillColor: '#e53935', color: '#ffffff' },
-        'html-td': { color: '#333333' },
+        'html-th': { bold: true, fillColor: '#e53935', color: '#ffffff', fontSize: 10 },
+        'html-td': { color: '#333333', fontSize: 10 },
+      },
+      tableLayouts: {
+        invoiceTable: TABLE_LAYOUT,
       },
       content,
     };
