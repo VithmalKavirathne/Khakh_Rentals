@@ -6,12 +6,13 @@ const {
   BORDER,
   FONT_BODY,
   loadDataUriImage,
+  px,
 } = require('./invoicePdfLayout');
 
-const AGREEMENT_FONT = 8.5;
-const AGREEMENT_H3 = 9.5;
-const AGREEMENT_TITLE = 12;
-const AGREEMENT_PART = 10;
+const AGREEMENT_FONT = px(10.5);
+const AGREEMENT_H3 = px(12.5);
+const AGREEMENT_TITLE = px(16);
+const AGREEMENT_PART = px(14);
 const BOTTOM_MARGIN = 15;
 
 function decodeHtml(text) {

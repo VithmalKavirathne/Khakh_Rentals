@@ -1,6 +1,7 @@
 const PDFDocument = require('pdfkit');
 const { renderPageOne } = require('./invoicePdfPageOne');
 const { renderAgreement } = require('./invoicePdfAgreement');
+const { MARGIN, px } = require('./invoicePdfLayout');
 
 /**
  * Hostinger-safe invoice PDF using PDFKit only (no browser/Chromium).
@@ -11,7 +12,7 @@ exports.generateInvoicePDF = async (data) =>
     try {
       const doc = new PDFDocument({
         size: 'A4',
-        margins: { top: 15, bottom: 15, left: 15, right: 15 },
+        margins: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN },
       });
       const chunks = [];
 

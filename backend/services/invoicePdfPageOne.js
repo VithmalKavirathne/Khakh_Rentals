@@ -11,8 +11,11 @@ const {
   FONT_SECTION,
   FONT_DECL,
   FONT_SPECIAL,
-  LOGO_WIDTH,
+  FONT_NOTE,
   LOGO_HEIGHT,
+  LOGO_MAX_WIDTH,
+  TABLE_SPACING,
+  px,
   safe,
   money,
   loadImageBuffer,
@@ -44,7 +47,7 @@ function drawHeader(doc, y) {
   doc.font('Helvetica-Bold').fontSize(FONT_TITLE).fillColor('#333333');
   doc.text('RENTAL AGREEMENT / TAX INVOICE\nKHAKH RENTALS', MARGIN, y, {
     width: COL_WIDTH,
-    lineGap: 1,
+    lineGap: 2,
   });
   doc.font('Helvetica').fontSize(FONT_BODY);
   doc.text(
@@ -53,27 +56,31 @@ function drawHeader(doc, y) {
       'Email : khakhrentals@yahoo.com\n' +
       'Phone : 1300911600',
     MARGIN,
-    doc.y + 2,
-    { width: COL_WIDTH, lineGap: 1 }
+    doc.y + px(2),
+    { width: COL_WIDTH, lineGap: 2 }
   );
 
   const headerBottom = doc.y;
-  const logoX = MARGIN + CONTENT_WIDTH - LOGO_WIDTH;
+  const logoX = MARGIN + CONTENT_WIDTH - LOGO_MAX_WIDTH;
   if (logo) {
-    doc.image(logo, logoX, y, { fit: [LOGO_WIDTH, LOGO_HEIGHT], align: 'right', valign: 'top' });
+    doc.image(logo, logoX, y, {
+      fit: [LOGO_MAX_WIDTH, LOGO_HEIGHT],
+      align: 'right',
+      valign: 'top',
+    });
   } else {
     doc
       .font('Helvetica-Bold')
-      .fontSize(24)
+      .fontSize(px(24))
       .fillColor(BORDER)
-      .text('KHAKH RENTALS', logoX - 20, y + 28, {
-        width: LOGO_WIDTH + 20,
+      .text('KHAKH RENTALS', logoX, y + px(20), {
+        width: LOGO_MAX_WIDTH,
         align: 'right',
       });
     doc.fillColor('#333333');
   }
 
-  return Math.max(headerBottom, y + LOGO_HEIGHT + 10) + 8;
+  return Math.max(headerBottom, y + LOGO_HEIGHT + px(10)) + px(10);
 }
 
 function drawInvoiceMeta(doc, data, y) {
@@ -124,12 +131,12 @@ function drawHirerTable(doc, data, x, y, width) {
 function drawInspectionSection(doc, data, x, y, width) {
   let currentY = drawTable(doc, x, y, width, [1], [[headerCell('DELIVERY VEHICLE INSPECTION')]]);
 
-  const diagramHeight = 110;
+  const diagramHeight = px(150);
   drawBorderBox(doc, x, currentY, width, diagramHeight);
   const diagram = loadImageBuffer('inspection-diagram.png');
   if (diagram) {
-    doc.image(diagram, x + 4, currentY + 4, {
-      fit: [width - 8, diagramHeight - 8],
+    doc.image(diagram, x + px(4), currentY + px(4), {
+      fit: [width - px(8), diagramHeight - px(8)],
       align: 'center',
       valign: 'center',
     });
@@ -144,7 +151,7 @@ function drawInspectionSection(doc, data, x, y, width) {
       });
     doc.fillColor('#333333');
   }
-  currentY += diagramHeight + 4;
+  currentY += diagramHeight + TABLE_SPACING;
 
   const ins = data.inspection || {};
   currentY = drawTable(doc, x, currentY, width, [1, 1, 1, 1], [
@@ -165,13 +172,13 @@ function drawInspectionSection(doc, data, x, y, width) {
 
   doc
     .font('Helvetica-Bold')
-    .fontSize(FONT_DECL)
+    .fontSize(FONT_NOTE)
     .fillColor(BORDER)
-    .text('*Hirers will be charged $50 for vehicles returned uncleaned', x, currentY + 2, {
+    .text('*Hirers will be charged $50 for vehicles returned uncleaned', x, currentY + px(2), {
       width,
     });
   doc.fillColor('#333333');
-  return currentY + 16;
+  return currentY + px(16);
 }
 
 function drawRentalColumn(doc, data, x, y, width) {
@@ -264,14 +271,14 @@ function drawFooterSection(doc, data, y) {
       '2. No pets, no smoking or a $50 cleaning fee will apply. All fines will incur a $50 administration fee.\n' +
       '3. This vehicle is registered for tools. You are liable for any additional charges (e.g. tolls) you incur.',
     MARGIN,
-    doc.y + 4,
-    { width: CONTENT_WIDTH, lineGap: 2 }
+    doc.y + px(4),
+    { width: CONTENT_WIDTH, lineGap: 3 }
   );
 
-  let currentY = doc.y + 12;
+  let currentY = doc.y + px(10);
   doc.font('Helvetica-Bold').fontSize(FONT_SECTION).fillColor('#333333');
   doc.text('Declaration:', MARGIN, currentY);
-  currentY = doc.y + 4;
+  currentY = doc.y + px(4);
   doc.font('Helvetica').fontSize(FONT_DECL);
   doc.text(
     '• I have read, understand and agree to this document;\n' +
@@ -279,10 +286,10 @@ function drawFooterSection(doc, data, y) {
       '• I confirm that to the best, of my knowledge, the information I have provided is true, complete and correct.',
     MARGIN,
     currentY,
-    { width: CONTENT_WIDTH, lineGap: 2 }
+    { width: CONTENT_WIDTH, lineGap: 3 }
   );
 
-  currentY = doc.y + 8;
+  currentY = doc.y + px(8);
   doc.font('Helvetica').fontSize(FONT_DECL).text("Hire's Signature:", MARGIN, currentY, {
     continued: true,
   });
@@ -321,7 +328,7 @@ function renderPageOne(doc, data) {
   const leftY = drawHirerTable(doc, data, leftX, y, COL_WIDTH);
   const leftEnd = drawInspectionSection(doc, data, leftX, leftY, COL_WIDTH);
   const rightEnd = drawRentalColumn(doc, data, rightX, y, COL_WIDTH);
-  y = Math.max(leftEnd, rightEnd) + 6;
+  y = Math.max(leftEnd, rightEnd) + px(6);
 
   drawFooterSection(doc, data, y);
 }
