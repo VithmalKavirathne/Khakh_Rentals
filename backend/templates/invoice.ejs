@@ -11,10 +11,28 @@
             padding: 0;
             color: #333;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-bottom: 10px;
+        }
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: top;
+        }
+        .layout-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .layout-table > tbody > tr > td {
+            border: none;
+            padding: 0;
+            vertical-align: top;
+            width: 49%;
+        }
+        .layout-table > tbody > tr > td + td {
+            padding-left: 8px;
         }
         .company-info {
             line-height: 1.4;
@@ -63,11 +81,7 @@
         .w-35 { width: 35%; }
         .w-50 { width: 50%; }
         .grid-container {
-            display: flex;
-            justify-content: space-between;
-        }
-        .col-left, .col-right {
-            width: 49%;
+            /* layout handled by .layout-table for PDF + print */
         }
         .small-text {
             font-size: 8px;
@@ -186,22 +200,24 @@
 <body>
 
     <!-- Header -->
-    <div class="header">
-        <div class="company-info">
-            <div class="company-title">RENTAL AGREEMENT / TAX INVOICE<br>KHAKH RENTALS</div>
-            Level 23, Tower 5, Collins Square, 727 Collins Street, Australia<br>
-            ABN : 16609767071<br>
-            Email : khakhrentals@yahoo.com<br>
-            Phone : 1300911600
-        </div>
-        <div class="logo-placeholder">
-            <% if (typeof logoSrc !== 'undefined' && logoSrc) { %>
-                <img src="<%= logoSrc %>" alt="KHAKH RENTALS" />
-            <% } else { %>
-                KHAKH RENTALS
-            <% } %>
-        </div>
-    </div>
+    <table class="header-table">
+        <tr>
+            <td class="company-info">
+                <div class="company-title">RENTAL AGREEMENT / TAX INVOICE<br>KHAKH RENTALS</div>
+                Level 23, Tower 5, Collins Square, 727 Collins Street, Australia<br>
+                ABN : 16609767071<br>
+                Email : khakhrentals@yahoo.com<br>
+                Phone : 1300911600
+            </td>
+            <td class="logo-placeholder" style="text-align: right;">
+                <% if (typeof logoSrc !== 'undefined' && logoSrc) { %>
+                    <img src="<%= logoSrc %>" alt="KHAKH RENTALS" />
+                <% } else { %>
+                    KHAKH RENTALS
+                <% } %>
+            </td>
+        </tr>
+    </table>
 
     <!-- Top Info -->
     <table class="table-section">
@@ -219,9 +235,10 @@
         </tr>
     </table>
 
-    <div class="grid-container">
+    <table class="layout-table">
+        <tr>
         <!-- Left Column: Hirer & Inspection -->
-        <div class="col-left">
+        <td class="col-left">
             <table class="table-section">
                 <tr><th colspan="4" class="bg-red">HIRER & AUTHORISED DRIVER</th></tr>
                 <tr><td class="bg-light-red">Name</td><td colspan="3"><%= data.driver.fullName %></td></tr>
@@ -273,10 +290,10 @@
             <div style="color:red; font-weight:bold; margin-top: 2px; font-size: 13px;">
                 *Hirers will be charged $50 for vehicles returned uncleaned
             </div>
-        </div>
+        </td>
 
         <!-- Right Column: Rental Details, Repairer, Third Party, Charges -->
-        <div class="col-right">
+        <td class="col-right">
             <table class="table-section">
                 <tr><th colspan="4" class="bg-red">RENTAL DETAILS</th></tr>
                 <tr>
@@ -354,8 +371,9 @@
                     <td class="text-right bg-red">$<%= data.billing.grandTotal.toFixed(2) %></td>
                 </tr>
             </table>
-        </div>
-    </div>
+        </td>
+        </tr>
+    </table>
 
     <div class="special-conditions">
         Special Condition:<br>
@@ -384,7 +402,7 @@
     </div>
 
     <!-- Full Agreement (Part A &amp; Part B) -->
-    <div class="agreement">
+    <div class="agreement" style="page-break-before: always;">
         <div class="doc-title">AGREEMENT AND AUTHORITY TO ACT</div>
         <div class="part-title">Part - A</div>
 
