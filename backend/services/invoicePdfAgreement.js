@@ -8,10 +8,10 @@ const {
   loadDataUriImage,
 } = require('./invoicePdfLayout');
 
-const AGREEMENT_FONT = 10.5;
-const AGREEMENT_H3 = 12.5;
-const AGREEMENT_TITLE = 16;
-const AGREEMENT_PART = 14;
+const AGREEMENT_FONT = 8.5;
+const AGREEMENT_H3 = 9.5;
+const AGREEMENT_TITLE = 12;
+const AGREEMENT_PART = 10;
 const BOTTOM_MARGIN = 15;
 
 function decodeHtml(text) {
