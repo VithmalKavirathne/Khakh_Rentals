@@ -42,14 +42,16 @@ async function launchBrowser() {
     return launchWithSparticuz();
   }
 
+  const launchOptions = {
+    headless: true,
+    args: LINUX_CHROME_ARGS,
+  };
+
   try {
     const localPuppeteer = require('puppeteer');
-    return localPuppeteer.launch({
-      headless: true,
-      args: LINUX_CHROME_ARGS,
-    });
+    return await localPuppeteer.launch(launchOptions);
   } catch (err) {
-    console.warn('Bundled Chromium failed, trying @sparticuz/chromium:', err.message);
+    console.warn('Puppeteer bundled Chromium launch failed, trying @sparticuz/chromium:', err.message);
     return launchWithSparticuz();
   }
 }
@@ -78,7 +80,7 @@ exports.generateInvoicePDF = async (data) => {
 
     return pdfBuffer;
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('PDF generation failed:', error);
     throw error;
   } finally {
     if (browser) {

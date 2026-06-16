@@ -315,14 +315,26 @@ exports.downloadInvoice = async (req, res) => {
         }
 
         const data = mapRowToInvoiceData(result.rows[0]);
-        const pdfBuffer = await generateInvoicePDF(data);
 
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=invoice-${data.invoiceNo}.pdf`);
-        res.send(pdfBuffer);
+        try {
+            const pdfBuffer = await generateInvoicePDF(data);
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=invoice-${data.invoiceNo}.pdf`);
+            res.send(pdfBuffer);
+        } catch (error) {
+            console.error('PDF generation failed:', error);
+            return res.status(500).json({
+                error: 'PDF generation failed',
+                details: error.message,
+            });
+        }
     } catch (error) {
-        console.error('Error downloading invoice:', error);
-        res.status(500).json({ error: 'Failed to generate invoice PDF' });
+        console.error('Error loading invoice for PDF:', error);
+        res.status(500).json({
+            error: 'Failed to load invoice for PDF',
+            details: error.message,
+        });
     }
 };
 
