@@ -1,7 +1,8 @@
 const PDFDocument = require('pdfkit');
 const { renderPageOne } = require('./invoicePdfPageOne');
 const { renderAgreement } = require('./invoicePdfAgreement');
-const { MARGIN, px } = require('./invoicePdfLayout');
+const { MARGIN } = require('./invoicePdfLayout');
+const { registerInvoiceFonts } = require('./invoicePdfFonts');
 
 /**
  * Hostinger-safe invoice PDF using PDFKit only (no browser/Chromium).
@@ -20,6 +21,7 @@ exports.generateInvoicePDF = async (data) =>
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
+      registerInvoiceFonts(doc);
       renderPageOne(doc, data);
       renderAgreement(doc, data)
         .then(() => doc.end())

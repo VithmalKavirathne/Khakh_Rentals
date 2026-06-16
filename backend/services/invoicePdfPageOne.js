@@ -3,6 +3,10 @@ const {
   CONTENT_WIDTH,
   COL_WIDTH,
   COL_GAP,
+  COL_W25x4,
+  COL_W35_65,
+  COL_W35_CENTER_RIGHT,
+  COL_W4_PAIRS,
   BORDER,
   HEADER_BG,
   LABEL_BG,
@@ -24,6 +28,7 @@ const {
   drawBorderBox,
   drawImportantBox,
 } = require('./invoicePdfLayout');
+const { pdfFont } = require('./invoicePdfFonts');
 
 const headerCell = (text, opts = {}) => ({
   text,
@@ -44,12 +49,12 @@ const valueCell = (text, opts = {}) => ({ text: safe(text), ...opts });
 
 function drawHeader(doc, y) {
   const logo = loadImageBuffer('logo.png');
-  doc.font('Helvetica-Bold').fontSize(FONT_TITLE).fillColor('#333333');
+  doc.font(pdfFont(doc, true)).fontSize(FONT_TITLE).fillColor('#333333');
   doc.text('RENTAL AGREEMENT / TAX INVOICE\nKHAKH RENTALS', MARGIN, y, {
     width: COL_WIDTH,
     lineGap: 2,
   });
-  doc.font('Helvetica').fontSize(FONT_BODY);
+  doc.font(pdfFont(doc, false)).fontSize(FONT_BODY);
   doc.text(
     'Level 23, Tower 5, Collins Square, 727 Collins Street, Australia\n' +
       'ABN : 16609767071\n' +
@@ -70,7 +75,7 @@ function drawHeader(doc, y) {
     });
   } else {
     doc
-      .font('Helvetica-Bold')
+      .font(pdfFont(doc, true))
       .fontSize(px(24))
       .fillColor(BORDER)
       .text('KHAKH RENTALS', logoX, y + px(20), {
@@ -89,7 +94,7 @@ function drawInvoiceMeta(doc, data, y) {
     MARGIN,
     y,
     CONTENT_WIDTH,
-    [1, 1, 1, 1],
+    COL_W25x4,
     [
       [
         headerCell('INVOICE NO.'),
@@ -109,7 +114,7 @@ function drawInvoiceMeta(doc, data, y) {
 
 function drawHirerTable(doc, data, x, y, width) {
   const d = data.driver || {};
-  return drawTable(doc, x, y, width, [1, 1, 1, 1], [
+  return drawTable(doc, x, y, width, COL_W4_PAIRS, [
     [headerCell('HIRER & AUTHORISED DRIVER', { colspan: 4 })],
     [labelCell('Name'), valueCell(d.fullName, { colspan: 3 })],
     [labelCell('Street Address'), valueCell(d.streetAddress, { colspan: 3 })],
@@ -142,7 +147,7 @@ function drawInspectionSection(doc, data, x, y, width) {
     });
   } else {
     doc
-      .font('Helvetica')
+      .font(pdfFont(doc, false))
       .fontSize(FONT_BODY)
       .fillColor('#999999')
       .text('[ Vehicle Wireframe Diagram ]', x, currentY + diagramHeight / 2 - 4, {
@@ -154,7 +159,7 @@ function drawInspectionSection(doc, data, x, y, width) {
   currentY += diagramHeight + TABLE_SPACING;
 
   const ins = data.inspection || {};
-  currentY = drawTable(doc, x, currentY, width, [1, 1, 1, 1], [
+  currentY = drawTable(doc, x, currentY, width, COL_W4_PAIRS, [
     [labelCell('Inspection Completed By', { colspan: 4 })],
     [
       labelCell('Fuel Level'),
@@ -164,14 +169,14 @@ function drawInspectionSection(doc, data, x, y, width) {
     ],
     [
       labelCell('Condition'),
-      valueCell(ins.condition),
+      valueCell(ins.condition, { nowrap: true }),
       labelCell('HIRER INITIAL'),
       valueCell(''),
     ],
   ]);
 
   doc
-    .font('Helvetica-Bold')
+    .font(pdfFont(doc, true))
     .fontSize(FONT_NOTE)
     .fillColor(BORDER)
     .text('*Hirers will be charged $50 for vehicles returned uncleaned', x, currentY + px(2), {
@@ -188,7 +193,7 @@ function drawRentalColumn(doc, data, x, y, width) {
   const tp = data.thirdParty || {};
   const b = data.billing || {};
 
-  let currentY = drawTable(doc, x, y, width, [1, 1, 1, 1], [
+  let currentY = drawTable(doc, x, y, width, COL_W4_PAIRS, [
     [headerCell('RENTAL DETAILS', { colspan: 4 })],
     [labelCell('Make'), valueCell(v.make), labelCell('Model'), valueCell(v.model)],
     [labelCell('Colour'), valueCell(v.colour), labelCell('Registration'), valueCell(v.registration)],
@@ -197,19 +202,19 @@ function drawRentalColumn(doc, data, x, y, width) {
     [labelCell('Time Out'), valueCell(r.timeOut), labelCell('Time Return'), valueCell(r.timeReturn)],
     [
       labelCell('Excess Amount'),
-      valueCell(`$${safe(r.excessAmount)}`),
+      valueCell(`$${safe(r.excessAmount)}`, { nowrap: true }),
       labelCell('Total Days'),
-      valueCell(r.totalDays),
+      valueCell(r.totalDays, { nowrap: true }),
     ],
   ]);
 
-  currentY = drawTable(doc, x, currentY, width, [1, 2], [
+  currentY = drawTable(doc, x, currentY, width, COL_W35_65, [
     [headerCell('Repairer Details', { colspan: 2 })],
     [labelCell('Repairer Name'), valueCell(rep.name)],
     [labelCell('Phone'), valueCell(rep.phone)],
   ]);
 
-  currentY = drawTable(doc, x, currentY, width, [1, 2], [
+  currentY = drawTable(doc, x, currentY, width, COL_W35_65, [
     [headerCell('Third Party Details', { colspan: 2 })],
     [labelCell('Insurance Company'), valueCell(tp.insuranceCompany)],
     [labelCell('Claim Number'), valueCell(tp.claimNumber)],
@@ -223,7 +228,7 @@ function drawRentalColumn(doc, data, x, y, width) {
   const regoTotal =
     (Number(b.registrationRecoveryDays) || 0) * (Number(b.registrationRecoveryRate) || 0);
 
-  currentY = drawTable(doc, x, currentY, width, [1.2, 1.2, 1], [
+  currentY = drawTable(doc, x, currentY, width, COL_W35_CENTER_RIGHT, [
     [headerCell('RENTAL CHARGES', { colspan: 3 })],
     [
       labelCell('Daily Rental'),
@@ -264,50 +269,54 @@ function drawRentalColumn(doc, data, x, y, width) {
 }
 
 function drawFooterSection(doc, data, y) {
-  doc.font('Helvetica-Bold').fontSize(FONT_SPECIAL).fillColor(BORDER);
-  doc.text('Special Condition:', MARGIN, y);
+  doc.font(pdfFont(doc, true)).fontSize(FONT_SPECIAL).fillColor(BORDER);
   doc.text(
-    '1. Vehicle to be returned as per rental vehicle delivery fuel level. Cars must be returned in a clean condition.\n' +
+    'Special Condition:\n' +
+      '1. Vehicle to be returned as per rental vehicle delivery fuel level. Cars must be returned in a clean condition.\n' +
       '2. No pets, no smoking or a $50 cleaning fee will apply. All fines will incur a $50 administration fee.\n' +
       '3. This vehicle is registered for tools. You are liable for any additional charges (e.g. tolls) you incur.',
     MARGIN,
-    doc.y + px(4),
-    { width: CONTENT_WIDTH, lineGap: 3 }
+    y,
+    { width: CONTENT_WIDTH, lineGap: px(4) }
   );
 
   let currentY = doc.y + px(10);
-  doc.font('Helvetica-Bold').fontSize(FONT_SECTION).fillColor('#333333');
+  doc.font(pdfFont(doc, true)).fontSize(FONT_SECTION).fillColor('#333333');
   doc.text('Declaration:', MARGIN, currentY);
   currentY = doc.y + px(4);
-  doc.font('Helvetica').fontSize(FONT_DECL);
+  doc.font(pdfFont(doc, false)).fontSize(FONT_DECL);
   doc.text(
     '• I have read, understand and agree to this document;\n' +
       '• I have read, understand and agree to the Terms & conditions of Use;\n' +
       '• I confirm that to the best, of my knowledge, the information I have provided is true, complete and correct.',
     MARGIN,
     currentY,
-    { width: CONTENT_WIDTH, lineGap: 3 }
+    { width: CONTENT_WIDTH, lineGap: px(4) }
   );
 
   currentY = doc.y + px(8);
-  doc.font('Helvetica').fontSize(FONT_DECL).text("Hire's Signature:", MARGIN, currentY, {
-    continued: true,
-  });
-
   const signature = loadDataUriImage(data.signature);
   if (signature) {
-    doc.text('', MARGIN, currentY);
-    doc.image(signature, MARGIN + 78, currentY - 4, { width: 140, height: 42 });
-    currentY += 46;
+    const sigY = currentY;
+    doc.font(pdfFont(doc, false)).fontSize(FONT_DECL).text("Hire's Signature:", MARGIN, sigY, {
+      continued: false,
+    });
+    doc.image(signature, MARGIN + px(72), sigY - px(2), {
+      fit: [px(280), px(55)],
+    });
+    currentY = sigY + px(55) + px(4);
   } else {
+    doc.font(pdfFont(doc, false)).fontSize(FONT_DECL).text("Hire's Signature:", MARGIN, currentY, {
+      continued: true,
+    });
     doc.text(' ______________________________', { continued: false });
-    currentY = doc.y + 6;
+    currentY = doc.y + px(6);
   }
 
   doc
-    .font('Helvetica-Bold')
+    .font(pdfFont(doc, true))
     .fontSize(FONT_DECL)
-    .text('Account name: Khakh Rentals, BSB: 063-185, Account number: 1127 0117', MARGIN, currentY + 6, {
+    .text('Account name: Khakh Rentals, BSB: 063-185, Account number: 1127 0117', MARGIN, currentY + px(14), {
       width: CONTENT_WIDTH,
       align: 'center',
     });
@@ -315,7 +324,7 @@ function drawFooterSection(doc, data, y) {
   return drawImportantBox(
     doc,
     'IMPORTANT: A COPY OF YOUR LICENCE MUST ACCOMPANY THIS RENTAL AGREEMENT',
-    doc.y + 12
+    doc.y + px(10)
   );
 }
 

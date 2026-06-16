@@ -5,97 +5,132 @@ const {
   MARGIN,
   CONTENT_WIDTH,
   BORDER,
-  FONT_BODY,
   loadDataUriImage,
   px,
 } = require('./invoicePdfLayout');
+const { pdfFont } = require('./invoicePdfFonts');
 
+// invoice.ejs .agreement { font-size: 10.5px; line-height: 1.5; color: #000 }
 const AGREEMENT_FONT = px(10.5);
 const AGREEMENT_H3 = px(12.5);
 const AGREEMENT_TITLE = px(16);
 const AGREEMENT_PART = px(14);
-const BOTTOM_MARGIN = 15;
+const AGREEMENT_LINE_GAP = px(4.5);
+const CHECKBOX_SIZE = px(13);
 
-function decodeHtml(text) {
-  return text
+function decodeHtml(text, { trim = true } = {}) {
+  let result = text
     .replace(/&ldquo;|&rdquo;/g, '"')
     .replace(/&quot;/g, '"')
     .replace(/&amp;/g, '&')
     .replace(/&deg;/g, '°')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/\s+/g, ' ');
+  if (trim) {
+    result = result.trim();
+  } else {
+    result = result.replace(/^\s+/, ' ');
+  }
+  return result;
+}
+
+function parseParagraph(inner) {
+  if (inner.includes('<input type="checkbox"')) {
+    return {
+      type: 'checkbox',
+      checked: inner.includes('checked'),
+      text: decodeHtml(inner.replace(/<input[^>]*>/gi, '')),
+    };
+  }
+
+  if (inner.includes('<img') && inner.toLowerCase().includes('signature')) {
+    return { type: 'signature-line', inner };
+  }
+
+  const plain = decodeHtml(inner.replace(/<[^>]+>/g, ' '));
+  if (/^Signature:/i.test(plain)) {
+    return { type: 'signature-line', inner };
+  }
+
+  const termMatch = inner.match(/<span class="term">([\s\S]*?)<\/span>\s*([\s\S]*)/i);
+  if (termMatch) {
+    return {
+      type: 'term-p',
+      term: decodeHtml(termMatch[1]),
+      text: decodeHtml(termMatch[2]).trim(),
+    };
+  }
+
+  return { type: 'p', text: decodeHtml(inner) };
 }
 
 function parseAgreementHtml(html) {
   const blocks = [];
-  const regex =
-    /<(div class="doc-title"|div class="part-title"|h3|p)[^>]*>([\s\S]*?)<\/\1>/gi;
+  const chunkRe =
+    /<div class="doc-title">([\s\S]*?)<\/div>|<div class="part-title">([\s\S]*?)<\/div>|<h3>([\s\S]*?)<\/h3>|<p([^>]*)>([\s\S]*?)<\/p>/gi;
   let match;
 
-  while ((match = regex.exec(html)) !== null) {
-    const tag = match[1];
-    const inner = match[2];
-
-    if (tag.startsWith('div class="doc-title"')) {
-      blocks.push({ type: 'doc-title', text: decodeHtml(inner) });
-    } else if (tag.startsWith('div class="part-title"')) {
-      blocks.push({ type: 'part-title', text: decodeHtml(inner) });
-    } else if (tag === 'h3') {
-      blocks.push({ type: 'h3', text: decodeHtml(inner) });
-    } else if (tag === 'p') {
-      if (inner.includes('<input type="checkbox"')) {
-        blocks.push({
-          type: 'checkbox',
-          checked: !inner.includes('type="checkbox"') || inner.includes('checked'),
-          text: decodeHtml(inner.replace(/<input[^>]*>/gi, '')),
-        });
-      } else if (inner.includes('<img') && inner.toLowerCase().includes('signature')) {
-        blocks.push({ type: 'signature-line', inner });
-      } else if (/Full Name:/i.test(inner)) {
-        blocks.push({ type: 'p', text: decodeHtml(inner) });
-      } else if (/^Signature:/i.test(decodeHtml(inner.replace(/<[^>]+>/g, '')))) {
-        blocks.push({ type: 'signature-line', inner });
-      } else {
-        const termMatch = inner.match(/<span class="term">([\s\S]*?)<\/span>\s*([\s\S]*)/i);
-        if (termMatch) {
-          blocks.push({
-            type: 'term-p',
-            term: decodeHtml(termMatch[1]),
-            text: decodeHtml(termMatch[2]),
-          });
-        } else {
-          blocks.push({ type: 'p', text: decodeHtml(inner) });
-        }
-      }
+  while ((match = chunkRe.exec(html)) !== null) {
+    if (match[1] !== undefined) {
+      blocks.push({ type: 'doc-title', text: decodeHtml(match[1]) });
+    } else if (match[2] !== undefined) {
+      blocks.push({ type: 'part-title', text: decodeHtml(match[2]) });
+    } else if (match[3] !== undefined) {
+      blocks.push({ type: 'h3', text: decodeHtml(match[3]) });
+    } else if (match[5] !== undefined) {
+      blocks.push(parseParagraph(match[5]));
     }
   }
 
   return blocks;
 }
 
-function ensureSpace(doc, heightNeeded) {
-  const pageBottom = doc.page.height - BOTTOM_MARGIN;
-  if (doc.y + heightNeeded > pageBottom) {
-    doc.addPage();
-    doc.x = MARGIN;
-    doc.y = MARGIN;
-  }
-}
-
 function writeParagraph(doc, text, opts = {}) {
   const width = opts.width || CONTENT_WIDTH;
   const fontSize = opts.fontSize || AGREEMENT_FONT;
-  doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize);
-  const height = doc.heightOfString(text, { width, align: opts.align || 'justify', lineGap: 1 });
-  ensureSpace(doc, height + (opts.gap || 4));
+  if (opts.marginTop) {
+    doc.y += opts.marginTop;
+  }
+  doc.font(pdfFont(doc, opts.bold)).fontSize(fontSize);
   doc.text(text, MARGIN, doc.y, {
     width,
     align: opts.align || 'justify',
-    lineGap: 1,
+    lineGap: opts.lineGap ?? AGREEMENT_LINE_GAP,
   });
-  doc.y += opts.gap || 4;
+  doc.y += opts.gap ?? px(4);
+}
+
+function drawCheckbox(doc, checked, text) {
+  const textWidth = CONTENT_WIDTH - CHECKBOX_SIZE - px(8);
+  doc.font(pdfFont(doc, false)).fontSize(AGREEMENT_FONT);
+  const textHeight = doc.heightOfString(text, { width: textWidth, lineGap: AGREEMENT_LINE_GAP });
+  const rowHeight = Math.max(CHECKBOX_SIZE + px(2), textHeight);
+  const y = doc.y + px(4);
+  const boxY = y + (rowHeight - CHECKBOX_SIZE) / 2;
+  const radius = px(2);
+
+  doc.roundedRect(MARGIN, boxY, CHECKBOX_SIZE, CHECKBOX_SIZE, radius);
+
+  if (checked) {
+    doc.fillColor(BORDER).fill();
+    doc
+      .moveTo(MARGIN + px(2.5), boxY + CHECKBOX_SIZE / 2)
+      .lineTo(MARGIN + CHECKBOX_SIZE / 2 - px(0.5), boxY + CHECKBOX_SIZE - px(3))
+      .lineTo(MARGIN + CHECKBOX_SIZE - px(2), boxY + px(2.5))
+      .strokeColor('#ffffff')
+      .lineWidth(1.4)
+      .stroke();
+  } else {
+    doc.fillColor('#ffffff').fill();
+    doc.lineWidth(1).strokeColor('#757575').stroke();
+  }
+
+  doc.fillColor('#000000').text(text, MARGIN + CHECKBOX_SIZE + px(8), y, {
+    width: textWidth,
+    lineGap: AGREEMENT_LINE_GAP,
+  });
+  doc.y = y + rowHeight + px(2);
 }
 
 function renderBlock(doc, block, data) {
@@ -106,7 +141,7 @@ function renderBlock(doc, block, data) {
         fontSize: AGREEMENT_TITLE,
         bold: true,
         align: 'center',
-        gap: 2,
+        gap: px(2),
       });
       doc.fillColor('#000000');
       break;
@@ -116,7 +151,7 @@ function renderBlock(doc, block, data) {
         fontSize: AGREEMENT_PART,
         bold: true,
         align: 'center',
-        gap: 6,
+        gap: px(6),
       });
       break;
     case 'h3':
@@ -124,49 +159,55 @@ function renderBlock(doc, block, data) {
       writeParagraph(doc, block.text, {
         fontSize: AGREEMENT_H3,
         bold: true,
-        gap: 2,
+        gap: px(4),
       });
       doc.fillColor('#000000');
       break;
-    case 'term-p':
-      ensureSpace(doc, 20);
-      doc.font('Helvetica-Bold').fontSize(AGREEMENT_FONT).text(block.term, MARGIN, doc.y, {
+    case 'term-p': {
+      doc.y += px(4);
+      doc.font(pdfFont(doc, true)).fontSize(AGREEMENT_FONT).text(`${block.term} `, MARGIN, doc.y, {
         continued: true,
+        lineGap: AGREEMENT_LINE_GAP,
       });
-      doc.font('Helvetica').text(` ${block.text}`, {
+      doc.font(pdfFont(doc, false)).text(block.text, {
         width: CONTENT_WIDTH,
         align: 'justify',
-        lineGap: 1,
+        lineGap: AGREEMENT_LINE_GAP,
       });
-      doc.y += 4;
-      break;
-    case 'checkbox': {
-      const marker = block.checked ? '☑' : '☐';
-      writeParagraph(doc, `${marker} ${block.text}`, { fontSize: AGREEMENT_FONT, gap: 2 });
+      doc.y += px(4);
       break;
     }
+    case 'checkbox':
+      drawCheckbox(doc, block.checked, block.text);
+      break;
     case 'signature-line': {
-      ensureSpace(doc, 50);
-      if (/Full Name:/i.test(block.inner || '')) {
-        writeParagraph(doc, decodeHtml(block.inner || block.text || ''), { gap: 4 });
+      const plain = decodeHtml(block.inner || '');
+      if (/Full Name:/i.test(plain)) {
+        writeParagraph(doc, plain, { marginTop: px(10), gap: px(4) });
         break;
       }
-      doc.font('Helvetica').fontSize(AGREEMENT_FONT).text('Signature:', MARGIN, doc.y, {
+      doc.y += px(8);
+      doc.font(pdfFont(doc, false)).fontSize(AGREEMENT_FONT).text('Signature:', MARGIN, doc.y, {
         continued: false,
       });
       const signature = loadDataUriImage(data.signature);
       if (data.acknowledged && signature) {
-        doc.image(signature, MARGIN + 52, doc.y - 12, { width: 120, height: 36 });
-        doc.y += 30;
+        doc.image(signature, MARGIN + px(52), doc.y - px(12), {
+          fit: [px(280), px(55)],
+        });
+        doc.y += px(55);
       } else {
-        doc.text(' ______________________', MARGIN + 52, doc.y - 10);
-        doc.y += 14;
+        doc.text(' ______________________', MARGIN + px(52), doc.y - px(10));
+        doc.y += px(14);
       }
       break;
     }
     case 'p':
     default:
-      writeParagraph(doc, block.text, { fontSize: AGREEMENT_FONT, gap: 3 });
+      writeParagraph(doc, block.text, {
+        fontSize: AGREEMENT_FONT,
+        gap: px(4),
+      });
       break;
   }
 }

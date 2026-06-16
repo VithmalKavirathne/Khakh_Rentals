@@ -73,11 +73,14 @@ app.get('/api/env-check', (req, res) => {
 // PDF asset diagnostic — confirms logo/diagram available for invoice PDFs
 app.get('/api/pdf-assets-check', (req, res) => {
     const { getPdfAssetStatus } = require('./services/invoicePdfLayout');
+    const { getInvoiceFontStatus } = require('./services/invoicePdfFonts');
     const assets = getPdfAssetStatus();
+    const fonts = getInvoiceFontStatus();
     res.status(200).json({
-        ok: Object.values(assets).every((item) => item.available),
+        ok: Object.values(assets).every((item) => item.available) && Boolean(fonts.regular),
         cwd: process.cwd(),
         assets,
+        fonts,
     });
 });
 

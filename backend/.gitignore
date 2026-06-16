@@ -3,3 +3,6 @@ node_modules/
 .env.local
 local-test-invoice.pdf
 test-invoice.pdf
+test-pdfkit-invoice.pdf
+assets/fonts/Arial.ttf
+assets/fonts/Arial-Bold.ttf

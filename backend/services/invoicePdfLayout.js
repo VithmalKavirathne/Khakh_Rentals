@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const embeddedAssets = require('./embeddedPdfAssets');
+const { pdfFont } = require('./invoicePdfFonts');
 
 /** Convert invoice.ejs CSS px to PDF points (96dpi → 72pt/in). */
 const px = (value) => (value * 72) / 96;
@@ -8,11 +9,19 @@ const px = (value) => (value * 72) / 96;
 const MARGIN = px(20);
 const PAGE_WIDTH = 595.28;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
-const COL_GAP = px(10);
-const COL_WIDTH = (CONTENT_WIDTH - COL_GAP) / 2;
+// invoice.ejs: .col-left, .col-right { width: 49%; }
+const COL_WIDTH = CONTENT_WIDTH * 0.49;
+const COL_GAP = CONTENT_WIDTH - COL_WIDTH * 2;
 const PADDING = px(4);
-const MIN_ROW_HEIGHT = px(16);
+const MIN_ROW_HEIGHT = px(14);
 const TABLE_SPACING = px(5);
+
+// invoice.ejs width classes
+const COL_W25x4 = [0.25, 0.25, 0.25, 0.25];
+const COL_W35_65 = [0.35, 0.65];
+const COL_W35_CENTER_RIGHT = [0.35, 0.325, 0.325];
+const COL_W4_EQUAL = [1, 1, 1, 1];
+const COL_W4_PAIRS = [1, 1, 1, 1];
 
 const BORDER = '#d32f2f';
 const HEADER_BG = '#e53935';
@@ -103,42 +112,66 @@ function drawTable(doc, x, y, tableWidth, colWidths, rows) {
     for (const cell of row) {
       const span = cell.colspan || 1;
       const cellWidth = widths.slice(colIndex, colIndex + span).reduce((a, b) => a + b, 0);
-      const font = cell.bold ? 'Helvetica-Bold' : 'Helvetica';
       const fontSize = cell.fontSize || FONT_BODY;
-      doc.font(font).fontSize(fontSize);
+      doc.font(pdfFont(doc, cell.bold)).fontSize(fontSize);
       const innerWidth = cellWidth - PADDING * 2;
-      const textHeight = doc.heightOfString(safe(cell.text), {
-        width: innerWidth,
-        align: cell.align || 'left',
-        lineGap: 1,
-      });
+      let renderSize = fontSize;
+      const cellText = safe(cell.text);
+      doc.font(pdfFont(doc, cell.bold)).fontSize(renderSize);
+      if (cell.nowrap && cellText) {
+        let textWidth = doc.widthOfString(cellText);
+        while (renderSize > 5.5 && textWidth > innerWidth) {
+          renderSize -= 0.25;
+          doc.font(pdfFont(doc, cell.bold)).fontSize(renderSize);
+          textWidth = doc.widthOfString(cellText);
+        }
+      }
+      const textHeight = cell.nowrap
+        ? doc.heightOfString(cellText)
+        : doc.heightOfString(cellText, {
+            width: innerWidth,
+            align: cell.align || 'left',
+            lineGap: 0,
+          });
       const cellHeight = Math.max(textHeight + PADDING * 2, MIN_ROW_HEIGHT);
       rowHeight = Math.max(rowHeight, cellHeight);
-      cells.push({ cell, xPos, cellWidth });
+      cells.push({ cell, xPos, cellWidth, renderSize, cellText, innerWidth });
       colIndex += span;
       xPos += cellWidth;
     }
 
-    for (const { cell, xPos, cellWidth } of cells) {
+    for (const { cell, xPos, cellWidth, renderSize, cellText, innerWidth } of cells) {
       if (cell.bg) {
         doc.save();
         doc.rect(xPos, currentY, cellWidth, rowHeight).fill(cell.bg);
         doc.restore();
       }
+      if (!cell.bg) {
+        doc.save();
+        doc.rect(xPos, currentY, cellWidth, rowHeight).fill('#ffffff');
+        doc.restore();
+      }
       doc
         .rect(xPos, currentY, cellWidth, rowHeight)
         .strokeColor(BORDER)
-        .lineWidth(0.75)
+        .lineWidth(1)
         .stroke();
       doc
         .fillColor(cell.color || '#333333')
-        .font(cell.bold ? 'Helvetica-Bold' : 'Helvetica')
-        .fontSize(cell.fontSize || FONT_BODY)
-        .text(safe(cell.text), xPos + PADDING, currentY + PADDING, {
-          width: cellWidth - PADDING * 2,
-          align: cell.align || 'left',
-          lineGap: 1,
+        .font(pdfFont(doc, cell.bold))
+        .fontSize(renderSize);
+      if (cell.nowrap) {
+        doc.text(cellText, xPos + PADDING, currentY + PADDING, {
+          lineBreak: false,
+          width: innerWidth,
         });
+      } else {
+        doc.text(cellText, xPos + PADDING, currentY + PADDING, {
+          width: innerWidth,
+          align: cell.align || 'left',
+          lineGap: 0,
+        });
+      }
     }
 
     currentY += rowHeight;
@@ -148,7 +181,7 @@ function drawTable(doc, x, y, tableWidth, colWidths, rows) {
 }
 
 function drawBorderBox(doc, x, y, width, height) {
-  doc.rect(x, y, width, height).strokeColor(BORDER).lineWidth(0.75).stroke();
+  doc.rect(x, y, width, height).strokeColor(BORDER).lineWidth(1).stroke();
 }
 
 function drawImportantBox(doc, text, y) {
@@ -156,13 +189,13 @@ function drawImportantBox(doc, text, y) {
   const boxX = MARGIN + (CONTENT_WIDTH - boxWidth) / 2;
   const boxPaddingX = px(12);
   const boxPaddingY = px(8);
-  doc.font('Helvetica-Bold').fontSize(FONT_DECL);
+  doc.font(pdfFont(doc, true)).fontSize(FONT_DECL);
   const textHeight = doc.heightOfString(text, { width: boxWidth - boxPaddingX * 2, align: 'center' });
   const boxHeight = textHeight + boxPaddingY * 2;
   doc
     .roundedRect(boxX, y, boxWidth, boxHeight, px(4))
     .strokeColor(BORDER)
-    .lineWidth(1.5)
+    .lineWidth(2)
     .stroke();
   doc.fillColor(BORDER).text(text, boxX + boxPaddingX, y + boxPaddingY, {
     width: boxWidth - boxPaddingX * 2,
@@ -177,6 +210,11 @@ module.exports = {
   CONTENT_WIDTH,
   COL_WIDTH,
   COL_GAP,
+  COL_W25x4,
+  COL_W35_65,
+  COL_W35_CENTER_RIGHT,
+  COL_W4_EQUAL,
+  COL_W4_PAIRS,
   BORDER,
   HEADER_BG,
   LABEL_BG,

@@ -15,10 +15,14 @@
   "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.6",
+    "dejavu-fonts-ttf": "^2.37.3",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "pdfkit": "^0.17.2",
     "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1"
   }
 }
