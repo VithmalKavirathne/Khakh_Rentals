@@ -1,4 +1,10 @@
 {
+  "name": "khakh-rentals",
+  "private": true,
+  "scripts": {
+    "start": "node backend/server.js",
+    "postinstall": "cd backend && npm install"
+  },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",
     "autoprefixer": "^10.5.0",
