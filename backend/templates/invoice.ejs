@@ -5,33 +5,16 @@
     <title>Invoice</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
             font-size: 10px;
             margin: 0;
             padding: 0;
             color: #333;
         }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
+        .header {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 10px;
-        }
-        .header-table td {
-            border: none;
-            padding: 0;
-            vertical-align: top;
-        }
-        .layout-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .layout-table > tbody > tr > td {
-            border: none;
-            padding: 0;
-            vertical-align: top;
-            width: 49%;
-        }
-        .layout-table > tbody > tr > td + td {
-            padding-left: 8px;
         }
         .company-info {
             line-height: 1.4;
@@ -80,7 +63,11 @@
         .w-35 { width: 35%; }
         .w-50 { width: 50%; }
         .grid-container {
-            /* layout handled by .layout-table for PDF + print */
+            display: flex;
+            justify-content: space-between;
+        }
+        .col-left, .col-right {
+            width: 49%;
         }
         .small-text {
             font-size: 8px;
@@ -199,24 +186,22 @@
 <body>
 
     <!-- Header -->
-    <table class="header-table">
-        <tr>
-            <td class="company-info">
-                <div class="company-title">RENTAL AGREEMENT / TAX INVOICE<br>KHAKH RENTALS</div>
-                Level 23, Tower 5, Collins Square, 727 Collins Street, Australia<br>
-                ABN : 16609767071<br>
-                Email : khakhrentals@yahoo.com<br>
-                Phone : 1300911600
-            </td>
-            <td class="logo-placeholder" style="text-align: right;">
-                <% if (typeof logoSrc !== 'undefined' && logoSrc) { %>
-                    <img src="<%= logoSrc %>" alt="KHAKH RENTALS" />
-                <% } else { %>
-                    KHAKH RENTALS
-                <% } %>
-            </td>
-        </tr>
-    </table>
+    <div class="header">
+        <div class="company-info">
+            <div class="company-title">RENTAL AGREEMENT / TAX INVOICE<br>KHAKH RENTALS</div>
+            Level 23, Tower 5, Collins Square, 727 Collins Street, Australia<br>
+            ABN : 16609767071<br>
+            Email : khakhrentals@yahoo.com<br>
+            Phone : 1300911600
+        </div>
+        <div class="logo-placeholder">
+            <% if (typeof logoSrc !== 'undefined' && logoSrc) { %>
+                <img src="<%= logoSrc %>" alt="KHAKH RENTALS" />
+            <% } else { %>
+                KHAKH RENTALS
+            <% } %>
+        </div>
+    </div>
 
     <!-- Top Info -->
     <table class="table-section">
@@ -234,10 +219,9 @@
         </tr>
     </table>
 
-    <table class="layout-table">
-        <tr>
+    <div class="grid-container">
         <!-- Left Column: Hirer & Inspection -->
-        <td class="col-left">
+        <div class="col-left">
             <table class="table-section">
                 <tr><th colspan="4" class="bg-red">HIRER & AUTHORISED DRIVER</th></tr>
                 <tr><td class="bg-light-red">Name</td><td colspan="3"><%= data.driver.fullName %></td></tr>
@@ -271,7 +255,7 @@
                 <% if (typeof inspectionDiagramSrc !== 'undefined' && inspectionDiagramSrc) { %>
                     <img src="<%= inspectionDiagramSrc %>" alt="Vehicle Condition Diagram" />
                 <% } else { %>
-                [ Vehicle Wireframe Diagram ]
+                    [ Vehicle Wireframe Diagram ]
                 <% } %>
             </div>
 
@@ -289,10 +273,10 @@
             <div style="color:red; font-weight:bold; margin-top: 2px; font-size: 13px;">
                 *Hirers will be charged $50 for vehicles returned uncleaned
             </div>
-        </td>
+        </div>
 
         <!-- Right Column: Rental Details, Repairer, Third Party, Charges -->
-        <td class="col-right">
+        <div class="col-right">
             <table class="table-section">
                 <tr><th colspan="4" class="bg-red">RENTAL DETAILS</th></tr>
                 <tr>
@@ -370,9 +354,8 @@
                     <td class="text-right bg-red">$<%= data.billing.grandTotal.toFixed(2) %></td>
                 </tr>
             </table>
-        </td>
-        </tr>
-    </table>
+        </div>
+    </div>
 
     <div class="special-conditions">
         Special Condition:<br>
@@ -394,14 +377,14 @@
         <% } else { %>
             ______________________________
         <% } %>
-        </div>
+    </div>
     <div class="bank-line">Account name: Khakh Rentals, BSB: 063-185, Account number: 1127 0117</div>
     <div class="important-wrap">
         <div class="important-line">IMPORTANT: A COPY OF YOUR LICENCE MUST ACCOMPANY THIS RENTAL AGREEMENT</div>
     </div>
 
     <!-- Full Agreement (Part A &amp; Part B) -->
-    <div class="agreement" style="page-break-before: always;">
+    <div class="agreement">
         <div class="doc-title">AGREEMENT AND AUTHORITY TO ACT</div>
         <div class="part-title">Part - A</div>
 
