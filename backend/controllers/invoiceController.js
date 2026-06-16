@@ -154,7 +154,7 @@ exports.createInvoice = async (req, res) => {
         const pdfBuffer = await generateInvoicePDF(data);
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=invoice-${data.invoiceNo}.pdf`);
+        res.setHeader('Content-Disposition', `attachment; filename="invoice-${data.invoiceNo}.pdf"`);
         res.send(pdfBuffer);
     } catch (pdfError) {
         console.error('PDF generation failed after invoice saved:', pdfError);
@@ -320,7 +320,7 @@ exports.downloadInvoice = async (req, res) => {
             const pdfBuffer = await generateInvoicePDF(data);
 
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename=invoice-${data.invoiceNo}.pdf`);
+            res.setHeader('Content-Disposition', `attachment; filename="invoice-${data.invoiceNo}.pdf"`);
             res.send(pdfBuffer);
         } catch (error) {
             console.error('PDF generation failed:', error);
