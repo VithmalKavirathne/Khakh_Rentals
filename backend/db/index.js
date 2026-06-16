@@ -1,8 +1,7 @@
 const { Pool } = require('pg');
-require('dotenv').config();
 
-// In production (e.g. Render) a single DATABASE_URL is provided and SSL is
-// required. Locally we fall back to discrete connection vars without SSL.
+// Env loaded once in config/env.js before this module is required.
+// Uses process.env.DATABASE_URL when set (Supabase on Hostinger), else local DB_* vars.
 const pool = process.env.DATABASE_URL
   ? new Pool({
       connectionString: process.env.DATABASE_URL,

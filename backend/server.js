@@ -1,11 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { getDatabaseEnvCheck } = require('./config/env');
 const db = require('./db');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
-
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -64,6 +63,11 @@ app.get('/api/db-test', async (req, res) => {
     } catch (error) {
         res.status(500).json({ ok: false, error: error.message });
     }
+});
+
+// Safe env diagnostic — never returns password or full DATABASE_URL
+app.get('/api/env-check', (req, res) => {
+    res.status(200).json(getDatabaseEnvCheck());
 });
 
 app.listen(PORT, () => {
