@@ -65,6 +65,9 @@ CREATE TABLE IF NOT EXISTS invoices (
     inspection_condition VARCHAR(255),
     inspector_name VARCHAR(255),
     
+    signature TEXT,
+    acknowledged BOOLEAN DEFAULT false,
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

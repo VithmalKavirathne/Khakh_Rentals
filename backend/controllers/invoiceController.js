@@ -56,9 +56,8 @@ exports.createInvoice = async (req, res) => {
         repairer_name, repairer_phone, 
         tp_insurance_company, tp_claim_number, tp_driver_name, tp_damaged_vehicle_rego, tp_date_of_accident,
         inspection_fuel_level, inspection_fuel_type, inspection_condition, inspector_name,
-        daily_days, daily_rate, delivery_charge, rego_days, rego_rate, sub_total, gst, total_amount,
         signature, acknowledged
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35) 
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27) 
     ON CONFLICT (invoice_no) DO UPDATE SET
         third_party_claim_no = EXCLUDED.third_party_claim_no,
         invoice_date = EXCLUDED.invoice_date,
@@ -84,14 +83,6 @@ exports.createInvoice = async (req, res) => {
         inspection_fuel_type = EXCLUDED.inspection_fuel_type,
         inspection_condition = EXCLUDED.inspection_condition,
         inspector_name = EXCLUDED.inspector_name,
-        daily_days = EXCLUDED.daily_days,
-        daily_rate = EXCLUDED.daily_rate,
-        delivery_charge = EXCLUDED.delivery_charge,
-        rego_days = EXCLUDED.rego_days,
-        rego_rate = EXCLUDED.rego_rate,
-        sub_total = EXCLUDED.sub_total,
-        gst = EXCLUDED.gst,
-        total_amount = EXCLUDED.total_amount,
         signature = EXCLUDED.signature,
         acknowledged = EXCLUDED.acknowledged
     RETURNING id`,
@@ -121,14 +112,6 @@ exports.createInvoice = async (req, res) => {
                 data.inspection.fuelType,
                 data.inspection.condition,
                 data.inspection.inspectorName,
-                data.billing.dailyRentalDays,
-                data.billing.dailyRentalRate,
-                data.billing.deliveryCharge,
-                data.billing.registrationRecoveryDays,
-                data.billing.registrationRecoveryRate,
-                data.billing.subTotal,
-                data.billing.gst,
-                data.billing.grandTotal,
                 data.signature || null,
                 data.acknowledged === true
             ]
@@ -399,7 +382,7 @@ exports.deleteInvoice = async (req, res) => {
                 (original_invoice_id, invoice_no, invoice_date, driver_name, make, model, registration, total_amount, data)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
             [row.id, row.invoice_no, row.invoice_date, row.full_name, row.make, row.model,
-             row.registration, row.total_amount, JSON.stringify(snapshot)]
+             row.registration, row.bb_grand_total, JSON.stringify(snapshot)]
         );
 
         // billing_breakdowns cascades on invoice delete
