@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const embeddedAssets = require('./embeddedPdfAssets');
 
 /** Convert invoice.ejs CSS px to PDF points (96dpi → 72pt/in). */
 const px = (value) => (value * 72) / 96;
@@ -34,6 +35,8 @@ const money = (value) => `$${(Number(value) || 0).toFixed(2)}`;
 const assetPath = (fileName) => {
   const candidates = [
     path.join(__dirname, '../assets/', fileName),
+    path.join(process.cwd(), 'assets', fileName),
+    path.join(process.cwd(), 'backend/assets', fileName),
     path.join(__dirname, '../../frontend/src/assets/', fileName),
   ];
   return candidates.find((p) => fs.existsSync(p)) || null;
@@ -41,7 +44,35 @@ const assetPath = (fileName) => {
 
 const loadImageBuffer = (fileName) => {
   const filePath = assetPath(fileName);
-  return filePath ? fs.readFileSync(filePath) : null;
+  if (filePath) {
+    return fs.readFileSync(filePath);
+  }
+
+  if (fileName === 'logo.png' && embeddedAssets.logo) {
+    return embeddedAssets.logo;
+  }
+  if (fileName === 'inspection-diagram.png' && embeddedAssets.inspectionDiagram) {
+    return embeddedAssets.inspectionDiagram;
+  }
+
+  console.warn(`PDF asset not found on disk or embedded fallback: ${fileName}`);
+  return null;
+};
+
+const getPdfAssetStatus = () => {
+  const files = ['logo.png', 'inspection-diagram.png'];
+  return files.reduce((status, fileName) => {
+    const diskPath = assetPath(fileName);
+    const embedded =
+      (fileName === 'logo.png' && embeddedAssets.logo) ||
+      (fileName === 'inspection-diagram.png' && embeddedAssets.inspectionDiagram);
+    status[fileName] = {
+      disk: diskPath || null,
+      embedded: Boolean(embedded),
+      available: Boolean(diskPath || embedded),
+    };
+    return status;
+  }, {});
 };
 
 const loadDataUriImage = (dataUri) => {
@@ -162,6 +193,7 @@ module.exports = {
   safe,
   money,
   assetPath,
+  getPdfAssetStatus,
   loadImageBuffer,
   loadDataUriImage,
   drawTable,

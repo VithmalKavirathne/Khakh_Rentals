@@ -70,6 +70,17 @@ app.get('/api/env-check', (req, res) => {
     res.status(200).json(getDatabaseEnvCheck());
 });
 
+// PDF asset diagnostic — confirms logo/diagram available for invoice PDFs
+app.get('/api/pdf-assets-check', (req, res) => {
+    const { getPdfAssetStatus } = require('./services/invoicePdfLayout');
+    const assets = getPdfAssetStatus();
+    res.status(200).json({
+        ok: Object.values(assets).every((item) => item.available),
+        cwd: process.cwd(),
+        assets,
+    });
+});
+
 db.initDb()
     .then(() => {
         app.listen(PORT, () => {

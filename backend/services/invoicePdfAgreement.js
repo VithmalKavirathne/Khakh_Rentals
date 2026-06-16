@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const ejs = require('ejs');
 const {
   MARGIN,
@@ -171,7 +172,16 @@ function renderBlock(doc, block, data) {
 }
 
 async function renderAgreement(doc, data) {
-  const templatePath = path.join(__dirname, '../templates/invoice-agreement.ejs');
+  const templateCandidates = [
+    path.join(__dirname, '../templates/invoice-agreement.ejs'),
+    path.join(process.cwd(), 'templates/invoice-agreement.ejs'),
+    path.join(process.cwd(), 'backend/templates/invoice-agreement.ejs'),
+  ];
+  const templatePath = templateCandidates.find((candidate) => fs.existsSync(candidate));
+  if (!templatePath) {
+    throw new Error('invoice-agreement.ejs template not found on server');
+  }
+
   const html = await ejs.renderFile(templatePath, { data });
   const blocks = parseAgreementHtml(html);
 
