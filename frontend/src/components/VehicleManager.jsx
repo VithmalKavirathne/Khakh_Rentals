@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-const API_URL = 'http://localhost:5000/api/vehicles';
+const API_URL = `${API_BASE_URL}/api/vehicles`;
 
 const VehicleManager = () => {
     const { register, handleSubmit, reset, formState: { errors } } = useForm();

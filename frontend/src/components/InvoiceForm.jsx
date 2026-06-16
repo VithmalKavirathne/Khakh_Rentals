@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import SignaturePad from './SignaturePad';
+import { API_BASE_URL } from '../config';
 
 const REPAIRERS = ['EPPING ACCIDENT REPAIR CENTER', 'ALZAKS PANELS'];
 
@@ -16,9 +17,9 @@ const InvoiceForm = () => {
         inspection: { fuelLevel: 'FULL', fuelType: 'ULP', condition: 'WASHED VACCUMED' },
         billing: {
             dailyRentalDays: 0, dailyRentalRate: 0,
-            excessReductionDays: 0, excessReductionRate: 0,
-            registrationRecoveryDays: 0, registrationRecoveryRate: 0,
-            deliveryCharge: 0
+            excessReductionDays: 0, excessReductionRate: 11,
+            registrationRecoveryDays: 0, registrationRecoveryRate: 40,
+            deliveryCharge: 75
         }
     };
 
@@ -34,7 +35,7 @@ const InvoiceForm = () => {
     // Load the previous invoice number so it can be shown as a hint inside the box.
     const loadLatestInvoiceNo = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/invoices/latest');
+            const res = await axios.get(`${API_BASE_URL}/api/invoices/latest`);
             if (res.data?.invoiceNo) {
                 setPrevInvoiceNo(res.data.invoiceNo);
             }
@@ -57,11 +58,13 @@ const InvoiceForm = () => {
         }
     }, [dateOut, dateReturn, setValue]);
 
-    // Keep Billing "Daily Days" in sync with Total Days.
+    // Keep Billing day fields (Daily / Excess / Rego) in sync with Total Days.
     const totalDays = watch('rental.totalDays');
     useEffect(() => {
         if (totalDays !== undefined && totalDays !== null && totalDays !== '') {
             setValue('billing.dailyRentalDays', totalDays);
+            setValue('billing.excessReductionDays', totalDays);
+            setValue('billing.registrationRecoveryDays', totalDays);
         }
     }, [totalDays, setValue]);
 
@@ -103,7 +106,7 @@ const InvoiceForm = () => {
             return;
         }
         try {
-            const res = await axios.get(`http://localhost:5000/api/vehicles/${encodeURIComponent(rego)}`);
+            const res = await axios.get(`${API_BASE_URL}/api/vehicles/${encodeURIComponent(rego)}`);
             const v = res.data;
             setValue('vehicle.make', v.make || '', { shouldValidate: true });
             setValue('vehicle.model', v.model || '', { shouldValidate: true });
@@ -159,7 +162,7 @@ const InvoiceForm = () => {
         };
 
         try {
-            const response = await axios.post('http://localhost:5000/api/invoices', payload, {
+            const response = await axios.post(`${API_BASE_URL}/api/invoices`, payload, {
                 responseType: 'blob'
             });
 
@@ -440,7 +443,7 @@ const InvoiceForm = () => {
                     </div>
                     <div className="w-1/2">
                         <label className="block text-sm font-medium text-gray-700">Excess Rate</label>
-                        <input type="number" step="0.01" {...register('billing.excessReductionRate')} defaultValue={0} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+                        <input type="number" step="0.01" {...register('billing.excessReductionRate')} defaultValue={11} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -450,13 +453,13 @@ const InvoiceForm = () => {
                     </div>
                     <div className="w-1/2">
                         <label className="block text-sm font-medium text-gray-700">Rego Rate</label>
-                        <input type="number" step="0.01" {...register('billing.registrationRecoveryRate')} defaultValue={0} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+                        <input type="number" step="0.01" {...register('billing.registrationRecoveryRate')} defaultValue={40} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
                     </div>
                 </div>
                 <div className="flex gap-2">
                     <div className="w-1/2">
                         <label className="block text-sm font-medium text-gray-700">Delivery Charge</label>
-                        <input type="number" step="0.01" {...register('billing.deliveryCharge')} defaultValue={0} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+                        <input type="number" step="0.01" {...register('billing.deliveryCharge')} defaultValue={75} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
                     </div>
                 </div>
             </div>

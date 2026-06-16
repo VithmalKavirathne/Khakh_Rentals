@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-const API_URL = 'http://localhost:5000/api/invoices';
+const API_URL = `${API_BASE_URL}/api/invoices`;
 
 const formatDate = (value) => (value ? new Date(value).toLocaleDateString() : '-');
 const formatDateTime = (value) => (value ? new Date(value).toLocaleString() : '-');
