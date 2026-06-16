@@ -11,6 +11,8 @@ const {
   FONT_SECTION,
   FONT_DECL,
   FONT_SPECIAL,
+  LOGO_WIDTH,
+  LOGO_HEIGHT,
   safe,
   money,
   loadImageBuffer,
@@ -56,21 +58,22 @@ function drawHeader(doc, y) {
   );
 
   const headerBottom = doc.y;
+  const logoX = MARGIN + CONTENT_WIDTH - LOGO_WIDTH;
   if (logo) {
-    doc.image(logo, MARGIN + CONTENT_WIDTH - 75, y, { fit: [70, 70], align: 'right' });
+    doc.image(logo, logoX, y, { fit: [LOGO_WIDTH, LOGO_HEIGHT], align: 'right', valign: 'top' });
   } else {
     doc
       .font('Helvetica-Bold')
-      .fontSize(18)
+      .fontSize(24)
       .fillColor(BORDER)
-      .text('KHAKH RENTALS', MARGIN + CONTENT_WIDTH - 140, y + 20, {
-        width: 130,
+      .text('KHAKH RENTALS', logoX - 20, y + 28, {
+        width: LOGO_WIDTH + 20,
         align: 'right',
       });
     doc.fillColor('#333333');
   }
 
-  return Math.max(headerBottom, y + 72) + 8;
+  return Math.max(headerBottom, y + LOGO_HEIGHT + 10) + 8;
 }
 
 function drawInvoiceMeta(doc, data, y) {

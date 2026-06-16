@@ -6,17 +6,21 @@ const PAGE_WIDTH = 595.28;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 const COL_GAP = 8;
 const COL_WIDTH = (CONTENT_WIDTH - COL_GAP) / 2;
-const PADDING = 3;
+const PADDING = 4;
 
 const BORDER = '#d32f2f';
 const HEADER_BG = '#e53935';
 const LABEL_BG = '#ffcdd2';
 
-const FONT_BODY = 8;
-const FONT_TITLE = 9;
-const FONT_SECTION = 10.5;
-const FONT_DECL = 10;
-const FONT_SPECIAL = 10.5;
+// Sized to match invoice.ejs (10px body, 12px company title, 14px special conditions)
+const FONT_BODY = 10;
+const FONT_TITLE = 12;
+const FONT_SECTION = 13;
+const FONT_DECL = 13;
+const FONT_SPECIAL = 14;
+
+const LOGO_WIDTH = 100;
+const LOGO_HEIGHT = 100;
 
 const safe = (value) => (value === null || value === undefined ? '' : String(value));
 const money = (value) => `$${(Number(value) || 0).toFixed(2)}`;
@@ -56,7 +60,7 @@ function drawTable(doc, x, y, tableWidth, colWidths, rows) {
   for (const row of rows) {
     let colIndex = 0;
     let xPos = x;
-    let rowHeight = 14;
+    let rowHeight = 16;
     const cells = [];
 
     for (const cell of row) {
@@ -70,7 +74,7 @@ function drawTable(doc, x, y, tableWidth, colWidths, rows) {
         width: innerWidth,
         align: cell.align || 'left',
       });
-      const cellHeight = Math.max(textHeight + PADDING * 2, 14);
+      const cellHeight = Math.max(textHeight + PADDING * 2, 16);
       rowHeight = Math.max(rowHeight, cellHeight);
       cells.push({ cell, xPos, cellWidth });
       colIndex += span;
@@ -140,6 +144,8 @@ module.exports = {
   FONT_SECTION,
   FONT_DECL,
   FONT_SPECIAL,
+  LOGO_WIDTH,
+  LOGO_HEIGHT,
   safe,
   money,
   assetPath,
