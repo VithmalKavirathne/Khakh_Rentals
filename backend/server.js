@@ -70,8 +70,15 @@ app.get('/api/env-check', (req, res) => {
     res.status(200).json(getDatabaseEnvCheck());
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+db.initDb()
+    .then(() => {
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error('Database init failed:', err.message);
+        process.exit(1);
+    });
 
 module.exports = app;

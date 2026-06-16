@@ -4,11 +4,12 @@ const cleanDate = (dateString) => (dateString && dateString.trim() !== "") ? dat
 
 exports.createInvoice = async (req, res) => {
     const client = await db.pool.connect();
+    const data = req.body;
+    let invoiceId;
 
     try {
         await client.query('BEGIN');
 
-        const data = req.body;
         const toNumber = (value, fallback = 0) => {
             const parsed = Number(value);
             return Number.isFinite(parsed) ? parsed : fallback;
@@ -116,7 +117,7 @@ exports.createInvoice = async (req, res) => {
                 data.acknowledged === true
             ]
         );
-        const invoiceId = invoiceRes.rows[0].id;
+        invoiceId = invoiceRes.rows[0].id;
 
         // 4. Insert Billing (clear any previous breakdown first so re-submits stay in sync)
         await client.query(`DELETE FROM billing_breakdowns WHERE invoice_id = $1`, [invoiceId]);
@@ -133,29 +134,35 @@ exports.createInvoice = async (req, res) => {
         );
 
         await client.query('COMMIT');
-
-        // Generate PDF
-        const pdfBuffer = await generateInvoicePDF(data);
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=invoice-${data.invoiceNo}.pdf`);
-        res.send(pdfBuffer);
-
     } catch (error) {
-        console.error("DETAILED ERROR:", error);
+        console.error('DETAILED ERROR:', error);
         await client.query('ROLLBACK');
         console.error('Error creating invoice:', error);
 
-        // Duplicate invoice number (UNIQUE constraint on invoices.invoice_no)
         if (error.code === '23505' && error.constraint === 'invoices_invoice_no_key') {
             return res.status(409).json({
                 error: `Invoice number "${req.body && req.body.invoiceNo}" already exists. Please use a unique invoice number.`
             });
         }
 
-        res.status(500).json({ error: error.message || 'Failed to create invoice and generate PDF' });
+        return res.status(500).json({ error: error.message || 'Failed to save invoice' });
     } finally {
         client.release();
+    }
+
+    try {
+        const pdfBuffer = await generateInvoicePDF(data);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=invoice-${data.invoiceNo}.pdf`);
+        res.send(pdfBuffer);
+    } catch (pdfError) {
+        console.error('PDF generation failed after invoice saved:', pdfError);
+        res.status(500).json({
+            error: `Invoice saved but PDF failed: ${pdfError.message}. Open Invoice Log to download it later.`,
+            invoiceId,
+            saved: true,
+        });
     }
 };
 

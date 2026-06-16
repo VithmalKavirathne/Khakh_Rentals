@@ -15,30 +15,48 @@ const pool = process.env.DATABASE_URL
       port: process.env.DB_PORT || 5432,
     });
 
-// Archive table for deleted invoices (keeps a separate log of removed records).
-pool.query(`
-  CREATE TABLE IF NOT EXISTS deleted_invoices (
-    id SERIAL PRIMARY KEY,
-    original_invoice_id INT,
-    invoice_no VARCHAR(100),
-    invoice_date DATE,
-    driver_name VARCHAR(255),
-    make VARCHAR(100),
-    model VARCHAR(100),
-    registration VARCHAR(50),
-    total_amount NUMERIC(10, 2),
-    data JSONB,
-    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  )
-`).catch((err) => console.error('Failed to ensure deleted_invoices table:', err.message));
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS deleted_invoices (
+      id SERIAL PRIMARY KEY,
+      original_invoice_id INT,
+      invoice_no VARCHAR(100),
+      invoice_date DATE,
+      driver_name VARCHAR(255),
+      make VARCHAR(100),
+      model VARCHAR(100),
+      registration VARCHAR(50),
+      total_amount NUMERIC(10, 2),
+      data JSONB,
+      deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-// Store the customer's digital signature + acknowledgement on the invoice.
-pool.query(`
-  ALTER TABLE invoices ADD COLUMN IF NOT EXISTS signature TEXT;
-  ALTER TABLE invoices ADD COLUMN IF NOT EXISTS acknowledged BOOLEAN DEFAULT false;
-`).catch((err) => console.error('Failed to ensure invoice signature columns:', err.message));
+  await pool.query(`
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS signature TEXT;
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS acknowledged BOOLEAN DEFAULT false;
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS billing_breakdowns (
+      id SERIAL PRIMARY KEY,
+      invoice_id INT REFERENCES invoices(id) ON DELETE CASCADE,
+      daily_rental_days INT,
+      daily_rental_rate NUMERIC(10, 2),
+      excess_reduction_days INT,
+      excess_reduction_rate NUMERIC(10, 2),
+      registration_recovery_days INT,
+      registration_recovery_rate NUMERIC(10, 2),
+      delivery_charge NUMERIC(10, 2),
+      sub_total NUMERIC(10, 2) NOT NULL,
+      gst NUMERIC(10, 2) NOT NULL,
+      grand_total NUMERIC(10, 2) NOT NULL
+    )
+  `);
+}
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
-  pool
+  pool,
+  initDb,
 };
