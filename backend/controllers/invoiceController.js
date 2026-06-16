@@ -260,18 +260,20 @@ const mapRowToInvoiceData = (row) => ({
 exports.listInvoices = async (req, res) => {
     try {
         const result = await db.query(
-            `SELECT i.id, i.invoice_no, i.invoice_date, i.created_at, i.total_amount,
+            `SELECT i.id, i.invoice_no, i.invoice_date, i.created_at,
+                    bb.grand_total AS total_amount,
                     d.full_name AS driver_name,
                     v.make, v.model, v.registration
              FROM invoices i
              LEFT JOIN drivers d ON d.id = i.driver_id
              LEFT JOIN vehicles v ON v.id = i.vehicle_id
+             LEFT JOIN billing_breakdowns bb ON bb.invoice_id = i.id
              ORDER BY i.created_at DESC, i.id DESC`
         );
         res.json(result.rows);
     } catch (error) {
-        console.error('Error listing invoices:', error);
-        res.status(500).json({ error: 'Failed to load invoices' });
+        console.error('Error listing invoices:', error.message);
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -342,8 +344,8 @@ exports.getLatestInvoiceNo = async (req, res) => {
         );
         res.json({ invoiceNo: result.rows.length ? result.rows[0].invoice_no : null });
     } catch (error) {
-        console.error('Error fetching latest invoice number:', error);
-        res.status(500).json({ error: 'Failed to load latest invoice number' });
+        console.error('Error fetching latest invoice number:', error.message);
+        res.status(500).json({ error: error.message });
     }
 };
 

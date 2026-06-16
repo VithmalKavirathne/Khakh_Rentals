@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const db = require('./db');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 
@@ -53,6 +54,16 @@ app.get('/health', (req, res) => {
 // Simple health check route
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });
+});
+
+// Temporary DB connectivity check (uses existing pool; no secrets returned)
+app.get('/api/db-test', async (req, res) => {
+    try {
+        const result = await db.query('SELECT NOW()');
+        res.status(200).json({ ok: true, time: result.rows[0].now });
+    } catch (error) {
+        res.status(500).json({ ok: false, error: error.message });
+    }
 });
 
 app.listen(PORT, () => {
