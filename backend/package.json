@@ -14,13 +14,15 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@sparticuz/chromium": "^133.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
-    "html-to-pdfmake": "^2.5.33",
-    "jsdom": "^29.1.1",
-    "pdfmake": "^0.2.20",
-    "pg": "^8.21.0"
+    "pg": "^8.21.0",
+    "playwright-core": "^1.52.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.52.0"
   }
 }

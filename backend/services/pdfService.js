@@ -1,13 +1,11 @@
+const { chromium } = require('playwright-core');
+const ejs = require('ejs');
 const path = require('path');
 const fs = require('fs');
-const ejs = require('ejs');
-const { JSDOM } = require('jsdom');
-const htmlToPdfmake = require('html-to-pdfmake');
-const pdfMake = require('pdfmake/build/pdfmake');
-const pdfFonts = require('pdfmake/build/vfs_fonts');
-const { prepareHtmlForPdfMake } = require('./invoicePdfStyles');
 
-pdfMake.vfs = pdfFonts.pdfMake?.vfs || pdfFonts.vfs;
+const isVercel = process.env.VERCEL === '1';
+const useSparticuz =
+  isVercel || process.env.USE_SPARTICUZ_CHROMIUM === '1' || process.env.HOSTINGER === '1';
 
 const loadImageAsDataUri = (fileName) => {
   const candidates = [
@@ -33,103 +31,79 @@ const loadImageAsDataUri = (fileName) => {
 const logoSrc = loadImageAsDataUri('logo.png');
 const inspectionDiagramSrc = loadImageAsDataUri('inspection-diagram.png');
 
-// Puppeteer used 20px margins (~15pt on A4)
-const PAGE_MARGINS = [15, 15, 15, 15];
+const SYSTEM_CHROMIUM_PATHS = [
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+  process.env.CHROMIUM_EXECUTABLE_PATH,
+  '/usr/bin/chromium-browser',
+  '/usr/bin/chromium',
+  '/usr/bin/google-chrome',
+  '/usr/bin/google-chrome-stable',
+].filter(Boolean);
 
-/** Apply red table borders and page breaks across the pdfmake content tree. */
-function enhancePdfContent(nodes) {
-  if (nodes == null) return;
-  if (Array.isArray(nodes)) {
-    nodes.forEach((item) => enhancePdfContent(item));
-    return;
-  }
-  if (typeof nodes !== 'object') return;
-
-  if (nodes.pageBreakBefore && !nodes.pageBreak) {
-    nodes.pageBreak = 'before';
-    delete nodes.pageBreakBefore;
-  }
-
-  if (nodes.table) {
-    nodes.layout = nodes.layout || 'invoiceTable';
-    enhancePdfContent(nodes.table.body);
+async function launchBrowser() {
+  if (useSparticuz) {
+    const sparticuz = require('@sparticuz/chromium');
+    sparticuz.setGraphicsMode = false;
+    return chromium.launch({
+      args: [...sparticuz.args, '--hide-scrollbars', '--disable-web-security', '--no-sandbox'],
+      executablePath: await sparticuz.executablePath(),
+      headless: sparticuz.headless,
+    });
   }
 
-  if (nodes.stack) enhancePdfContent(nodes.stack);
-  if (nodes.columns) enhancePdfContent(nodes.columns);
-  if (nodes.ul) enhancePdfContent(nodes.ul);
-  if (nodes.ol) enhancePdfContent(nodes.ol);
-  if (nodes.text && Array.isArray(nodes.text)) enhancePdfContent(nodes.text);
+  for (const executablePath of SYSTEM_CHROMIUM_PATHS) {
+    if (fs.existsSync(executablePath)) {
+      return chromium.launch({
+        executablePath,
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+    }
+  }
+
+  // Local dev: full playwright package ships its own Chromium.
+  try {
+    const { chromium: localChromium } = require('playwright');
+    return localChromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+  } catch {
+    throw new Error(
+      'No Chromium found for PDF generation. Install Playwright locally (npm install) or set CHROMIUM_EXECUTABLE_PATH on the server.'
+    );
+  }
 }
 
-const INVOICE_TABLE_LAYOUT = {
-  hLineWidth: () => 1,
-  vLineWidth: () => 1,
-  hLineColor: () => '#d32f2f',
-  vLineColor: () => '#d32f2f',
-  paddingLeft: () => 4,
-  paddingRight: () => 4,
-  paddingTop: () => 4,
-  paddingBottom: () => 4,
-};
-
-/**
- * Hostinger-safe PDF generation — same invoice.ejs template Puppeteer rendered,
- * converted via html-to-pdfmake + pdfmake (no Chromium required).
- */
 exports.generateInvoicePDF = async (data) => {
+  let browser;
   try {
     const templatePath = path.join(__dirname, '../templates/invoice.ejs');
-    const renderedHtml = await ejs.renderFile(templatePath, { data, logoSrc, inspectionDiagramSrc });
-    const html = prepareHtmlForPdfMake(renderedHtml);
+    const html = await ejs.renderFile(templatePath, { data, logoSrc, inspectionDiagramSrc });
 
-    const dom = new JSDOM(html);
-    const content = htmlToPdfmake(html, {
-      window: dom.window,
-      tableAutoSize: true,
-      defaultStyles: {
-        b: { bold: true },
-        strong: { bold: true },
-        em: { italics: true },
-        h1: { fontSize: 16, bold: true, marginBottom: 5 },
-        h3: { fontSize: 12.5, bold: true, marginBottom: 4, marginTop: 8, color: '#d32f2f' },
-        p: { margin: [0, 2, 0, 2], fontSize: 10 },
-        li: { fontSize: 10 },
+    browser = await launchBrowser();
+    const page = await browser.newPage();
+
+    await page.setContent(html, { waitUntil: 'networkidle' });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20px',
+        bottom: '20px',
+        left: '20px',
+        right: '20px',
       },
     });
 
-    enhancePdfContent(content);
-
-    const docDefinition = {
-      pageSize: 'A4',
-      pageMargins: PAGE_MARGINS,
-      defaultStyle: {
-        font: 'Roboto',
-        fontSize: 10,
-        lineHeight: 1.15,
-        color: '#333333',
-      },
-      styles: {
-        'html-th': { bold: true, fillColor: '#e53935', color: '#ffffff', fontSize: 10 },
-        'html-td': { color: '#333333', fontSize: 10 },
-      },
-      tableLayouts: {
-        invoiceTable: INVOICE_TABLE_LAYOUT,
-      },
-      content,
-    };
-
-    return new Promise((resolve, reject) => {
-      pdfMake.createPdf(docDefinition).getBuffer((buffer) => {
-        if (!buffer) {
-          reject(new Error('PDF buffer generation returned empty result'));
-          return;
-        }
-        resolve(buffer);
-      });
-    });
+    return pdfBuffer;
   } catch (error) {
-    console.error('PDF generation failed:', error);
+    console.error('Error generating PDF:', error);
     throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 };
