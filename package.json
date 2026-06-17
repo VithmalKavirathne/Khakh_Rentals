@@ -4,7 +4,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "postinstall": "cd backend && npm install",
-    "build": "cd frontend && npm install --include=dev && npm run build"
+    "build": "npm install --prefix frontend --include=dev && npm run build --prefix frontend && node scripts/copy-frontend-dist.js"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",

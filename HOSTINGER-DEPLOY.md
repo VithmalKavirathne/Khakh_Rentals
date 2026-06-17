@@ -101,7 +101,7 @@ pm2 startup
 
 ## Part 3 — Frontend on Hostinger
 
-### Option A — hPanel Frontend Web App
+### Option A — hPanel Frontend Web App (repo root — recommended for Git deploy)
 
 1. **Websites** → **Add Website** → **Frontend web app** (or static site).
 2. Connect the same GitHub repo.
@@ -109,18 +109,31 @@ pm2 startup
 
 | Setting | Value |
 |---------|--------|
-| **Root directory** | `frontend` |
-| **Build command** | `npm run build` |
+| **Root directory** | `.` (repository root) |
+| **Build command** | `npm install && npm run build` |
 | **Output directory** | `dist` |
 | **Framework** | Vite (or React) |
+
+The root `npm run build` builds the React app and copies `frontend/dist` → `dist` for Hostinger.
 
 4. **Environment variable (required at build time):**
 
 | Key | Value |
 |-----|--------|
-| `VITE_API_URL` | `https://api.yourdomain.com` |
+| `VITE_API_URL` | `https://palevioletred-frog-869231.hostingersite.com` (your backend URL, no trailing slash) |
 
-5. Deploy and connect your main domain, e.g. **`yourdomain.com`**.
+5. Click **Redeploy** and wait for success (no `No output directory found` error).
+6. Hard-refresh the site (Ctrl+Shift+R) and open `/login`.
+
+### Option A2 — hPanel Frontend Web App (`frontend` folder)
+
+| Setting | Value |
+|---------|--------|
+| **Root directory** | `frontend` |
+| **Build command** | `npm install && npm run build` |
+| **Output directory** | `dist` |
+
+Same `VITE_API_URL` as above.
 
 ### Option B — Manual upload (any Hostinger plan with static hosting)
 
@@ -166,6 +179,7 @@ Templates: `deploy/hostinger/backend.env.example` and `deploy/hostinger/frontend
 | Problem | Fix |
 |---------|-----|
 | Frontend can't reach API | Check `VITE_API_URL` and **rebuild** frontend |
+| **`No output directory found after build`** | Root directory must be `.` with output `dist`, OR root `frontend` with output `dist`. Root deploy needs latest `npm run build` (copies to `/dist`) |
 | CORS error | `FRONTEND_URL` must exactly match frontend URL (`https://...`) |
 | Database error | Use Supabase **pooler** URI (port 6543), correct password |
 | PDF fails on VPS | Install Chromium deps (see VPS section) |
