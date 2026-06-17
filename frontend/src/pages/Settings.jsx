@@ -17,6 +17,12 @@ const emptyCreateForm = {
   role: 'user',
 };
 
+const inputClass =
+  'w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none';
+const tableClass = 'min-w-full text-sm table-fixed';
+const thClass = 'px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500';
+const tdClass = 'px-6 py-4 align-middle text-gray-800';
+
 export default function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -296,7 +302,8 @@ export default function Settings() {
 
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Create user</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Create user</h2>
+            <p className="text-sm text-gray-500 mb-4">Add a new login for staff or admin access.</p>
             <form onSubmit={handleCreate} className="space-y-3">
               <input
                 type="text"
@@ -304,7 +311,7 @@ export default function Settings() {
                 required
                 value={createForm.fullName}
                 onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className={inputClass}
               />
               <input
                 type="email"
@@ -312,14 +319,14 @@ export default function Settings() {
                 required
                 value={createForm.email}
                 onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className={inputClass}
               />
               <input
                 type="text"
                 placeholder="Phone (optional)"
                 value={createForm.phone}
                 onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className={inputClass}
               />
               <input
                 type="password"
@@ -327,7 +334,7 @@ export default function Settings() {
                 required
                 value={createForm.password}
                 onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className={inputClass}
               />
               <input
                 type="password"
@@ -335,12 +342,12 @@ export default function Settings() {
                 required
                 value={createForm.confirmPassword}
                 onChange={(e) => setCreateForm({ ...createForm, confirmPassword: e.target.value })}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className={inputClass}
               />
               <select
                 value={createForm.role}
                 onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className={inputClass}
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
@@ -348,7 +355,7 @@ export default function Settings() {
               <button
                 type="submit"
                 disabled={creating}
-                className="w-full rounded-md bg-red-600 py-2 text-white font-semibold hover:bg-red-700 disabled:opacity-60"
+                className="w-full rounded-md bg-red-600 py-2.5 text-sm text-white font-semibold hover:bg-red-700 disabled:opacity-60"
               >
                 {creating ? 'Creating...' : 'Create user'}
               </button>
@@ -357,33 +364,34 @@ export default function Settings() {
 
           {editingId && (
             <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Edit user #{editingId}</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">Edit user #{editingId}</h2>
+              <p className="text-sm text-gray-500 mb-4">Update account details or reset password.</p>
               <form onSubmit={handleUpdate} className="space-y-3">
                 <input
                   type="text"
                   required
                   value={editForm.fullName}
                   onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className={inputClass}
                 />
                 <input
                   type="email"
                   required
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className={inputClass}
                 />
                 <input
                   type="text"
                   placeholder="Phone"
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className={inputClass}
                 />
                 <select
                   value={editForm.role}
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className={inputClass}
                 >
                   <option value="user">User</option>
                   <option value="admin">Admin</option>
@@ -401,19 +409,19 @@ export default function Settings() {
                   placeholder="New password (optional)"
                   value={editForm.password}
                   onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className={inputClass}
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-3 pt-1">
                   <button
                     type="submit"
-                    className="flex-1 rounded-md bg-red-600 py-2 text-white font-semibold hover:bg-red-700"
+                    className="flex-1 rounded-md bg-red-600 py-2.5 text-sm text-white font-semibold hover:bg-red-700"
                   >
                     Save changes
                   </button>
                   <button
                     type="button"
                     onClick={cancelEdit}
-                    className="flex-1 rounded-md border border-gray-300 py-2 text-gray-700 hover:bg-gray-50"
+                    className="flex-1 rounded-md border border-gray-300 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     Cancel
                   </button>
@@ -423,47 +431,60 @@ export default function Settings() {
           )}
         </div>
 
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
+          <div className="px-6 py-5 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Users</h2>
+            <p className="text-sm text-gray-500 mt-1">Manage who can sign in to the application.</p>
           </div>
           {loading ? (
-            <p className="px-6 py-8 text-gray-500">Loading users...</p>
+            <p className="px-6 py-10 text-center text-gray-500">Loading users...</p>
           ) : users.length === 0 ? (
-            <p className="px-6 py-8 text-gray-500">No users yet. Create one above.</p>
+            <p className="px-6 py-10 text-center text-gray-500">No users yet. Create one above.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-left text-gray-600">
+              <table className={tableClass}>
+                <colgroup>
+                  <col className="w-[18%]" />
+                  <col className="w-[26%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[20%]" />
+                </colgroup>
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3">Phone</th>
-                    <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className={thClass}>Name</th>
+                    <th className={thClass}>Email</th>
+                    <th className={thClass}>Phone</th>
+                    <th className={thClass}>Role</th>
+                    <th className={thClass}>Status</th>
+                    <th className={thClass}>Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {users.map((row) => (
-                    <tr key={row.id} className="border-t border-gray-100">
-                      <td className="px-4 py-3">{row.fullName}</td>
-                      <td className="px-4 py-3">{row.email}</td>
-                      <td className="px-4 py-3">{row.phone || '—'}</td>
-                      <td className="px-4 py-3 capitalize">{row.role}</td>
-                      <td className="px-4 py-3">
+                    <tr key={row.id} className="hover:bg-gray-50/50">
+                      <td className={tdClass}>{row.fullName}</td>
+                      <td className={`${tdClass} break-all`}>{row.email}</td>
+                      <td className={tdClass}>{row.phone || '—'}</td>
+                      <td className={`${tdClass} capitalize`}>{row.role}</td>
+                      <td className={tdClass}>
                         {row.isActive ? (
-                          <span className="text-green-700">Active</span>
+                          <span className="inline-flex rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                            Active
+                          </span>
                         ) : (
-                          <span className="text-gray-500">Inactive</span>
+                          <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                            Inactive
+                          </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
+                      <td className={tdClass}>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1">
                           <button
                             type="button"
                             onClick={() => startEdit(row)}
-                            className="text-red-600 hover:text-red-700 font-medium"
+                            className="text-red-600 hover:text-red-700 font-medium whitespace-nowrap"
                           >
                             Edit
                           </button>
@@ -471,7 +492,7 @@ export default function Settings() {
                             <button
                               type="button"
                               onClick={() => handleDeactivate(row.id)}
-                              className="text-gray-600 hover:text-gray-800 font-medium"
+                              className="text-gray-600 hover:text-gray-800 font-medium whitespace-nowrap"
                             >
                               Deactivate
                             </button>
@@ -487,99 +508,116 @@ export default function Settings() {
         </section>
 
         <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-5 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Repairer centers</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Centers added here appear in the Repairer Name dropdown for all users.
+              Centers added here appear in the Repairer Name dropdown when creating invoices.
             </p>
           </div>
 
-          <div className="p-6 border-b border-gray-200">
-            <form onSubmit={handleCreateRepairer} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                placeholder="New repairer center name"
-                value={newRepairerName}
-                onChange={(e) => setNewRepairerName(e.target.value)}
-                className="flex-1 rounded-md border border-gray-300 px-3 py-2"
-              />
-              <button
-                type="submit"
-                disabled={creatingRepairer}
-                className="rounded-md bg-red-600 px-4 py-2 text-white font-semibold hover:bg-red-700 disabled:opacity-60"
-              >
-                {creatingRepairer ? 'Adding...' : 'Add center'}
-              </button>
+          <div className="px-6 py-5 border-b border-gray-200 bg-gray-50/50">
+            <form onSubmit={handleCreateRepairer} className="max-w-2xl">
+              <label htmlFor="newRepairerName" className="block text-sm font-medium text-gray-700 mb-2">
+                Add new center
+              </label>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <input
+                  id="newRepairerName"
+                  type="text"
+                  placeholder="e.g. EPPING ACCIDENT REPAIR CENTER"
+                  value={newRepairerName}
+                  onChange={(e) => setNewRepairerName(e.target.value)}
+                  className={`${inputClass} sm:flex-1 bg-white`}
+                />
+                <button
+                  type="submit"
+                  disabled={creatingRepairer}
+                  className="shrink-0 rounded-md bg-red-600 px-6 py-2 text-sm text-white font-semibold hover:bg-red-700 disabled:opacity-60 whitespace-nowrap"
+                >
+                  {creatingRepairer ? 'Adding...' : 'Add center'}
+                </button>
+              </div>
             </form>
           </div>
 
           {repairersLoading ? (
-            <p className="px-6 py-8 text-gray-500">Loading repairer centers...</p>
+            <p className="px-6 py-10 text-center text-gray-500">Loading repairer centers...</p>
           ) : repairers.length === 0 ? (
-            <p className="px-6 py-8 text-gray-500">No repairer centers yet. Add one above.</p>
+            <p className="px-6 py-10 text-center text-gray-500">No repairer centers yet. Add one above.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-left text-gray-600">
+              <table className={tableClass}>
+                <colgroup>
+                  <col />
+                  <col className="w-32" />
+                  <col className="w-40" />
+                </colgroup>
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className={thClass}>Center name</th>
+                    <th className={thClass}>Status</th>
+                    <th className={thClass}>Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {repairers.map((repairer) => (
-                    <tr key={repairer.id} className="border-t border-gray-100">
-                      <td className="px-4 py-3">
+                    <tr key={repairer.id} className="hover:bg-gray-50/50">
+                      <td className={tdClass}>
                         {editingRepairerId === repairer.id ? (
-                          <form onSubmit={handleUpdateRepairer} className="flex gap-2">
+                          <form onSubmit={handleUpdateRepairer} className="flex flex-col sm:flex-row sm:items-center gap-2 max-w-xl">
                             <input
                               type="text"
                               required
                               value={editRepairerName}
                               onChange={(e) => setEditRepairerName(e.target.value)}
-                              className="flex-1 rounded-md border border-gray-300 px-2 py-1"
+                              className={`${inputClass} sm:flex-1 py-1.5`}
                             />
-                            <button
-                              type="submit"
-                              className="text-red-600 hover:text-red-700 font-medium"
-                            >
-                              Save
-                            </button>
-                            <button
-                              type="button"
-                              onClick={cancelRepairerEdit}
-                              className="text-gray-600 hover:text-gray-800 font-medium"
-                            >
-                              Cancel
-                            </button>
+                            <div className="flex gap-3 shrink-0">
+                              <button
+                                type="submit"
+                                className="text-red-600 hover:text-red-700 font-medium whitespace-nowrap"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelRepairerEdit}
+                                className="text-gray-600 hover:text-gray-800 font-medium whitespace-nowrap"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </form>
                         ) : (
-                          repairer.name
+                          <span className="font-medium">{repairer.name}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className={tdClass}>
                         {repairer.isActive ? (
-                          <span className="text-green-700">Active</span>
+                          <span className="inline-flex rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                            Active
+                          </span>
                         ) : (
-                          <span className="text-gray-500">Hidden</span>
+                          <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                            Hidden
+                          </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
+                      <td className={tdClass}>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1">
                           {repairer.isActive && editingRepairerId !== repairer.id && (
                             <>
                               <button
                                 type="button"
                                 onClick={() => startRepairerEdit(repairer)}
-                                className="text-red-600 hover:text-red-700 font-medium"
+                                className="text-red-600 hover:text-red-700 font-medium whitespace-nowrap"
                               >
                                 Edit
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeactivateRepairer(repairer.id)}
-                                className="text-gray-600 hover:text-gray-800 font-medium"
+                                className="text-gray-600 hover:text-gray-800 font-medium whitespace-nowrap"
                               >
                                 Remove
                               </button>
@@ -589,7 +627,7 @@ export default function Settings() {
                             <button
                               type="button"
                               onClick={() => handleReactivateRepairer(repairer.id)}
-                              className="text-red-600 hover:text-red-700 font-medium"
+                              className="text-red-600 hover:text-red-700 font-medium whitespace-nowrap"
                             >
                               Restore
                             </button>
