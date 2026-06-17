@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { getDatabaseEnvCheck } = require('./config/env');
+const { getAuthEnvCheck } = require('./config/authEnv');
 const db = require('./db');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
@@ -72,7 +73,10 @@ app.get('/api/db-test', async (req, res) => {
 
 // Safe env diagnostic — never returns password or full DATABASE_URL
 app.get('/api/env-check', (req, res) => {
-    res.status(200).json(getDatabaseEnvCheck());
+    res.status(200).json({
+        database: getDatabaseEnvCheck(),
+        auth: getAuthEnvCheck(),
+    });
 });
 
 // PDF asset diagnostic — confirms logo/diagram available for invoice PDFs

@@ -18,6 +18,9 @@ if (!password) {
 }
 
 bcrypt.hash(password, 12).then((hash) => {
+  const hashB64 = Buffer.from(hash, 'utf8').toString('base64');
   console.log('\nAdd this to your backend .env / Hostinger environment:\n');
-  console.log(`ADMIN_PASSWORD_HASH=${hash}\n`);
+  console.log(`ADMIN_PASSWORD_HASH=${hash}`);
+  console.log('\nIf Hostinger truncates $ characters, use base64 instead:\n');
+  console.log(`ADMIN_PASSWORD_HASH_B64=${hashB64}\n`);
 });

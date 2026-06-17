@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
+const { getAdminPasswordHash } = require('../config/authEnv');
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
@@ -38,12 +39,12 @@ exports.login = async (req, res) => {
     }
 
     const identifier = String(usernameOrEmail).trim();
-    const adminUsername = process.env.ADMIN_USERNAME;
-    const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+    const adminUsername = process.env.ADMIN_USERNAME?.trim();
+    const adminPasswordHash = getAdminPasswordHash();
 
     if (adminUsername && identifier.toLowerCase() === adminUsername.toLowerCase()) {
       if (!adminPasswordHash) {
-        console.error('ADMIN_PASSWORD_HASH is not configured');
+        console.error('ADMIN_PASSWORD_HASH or ADMIN_PASSWORD_HASH_B64 is not configured');
         return res.status(500).json({ error: 'Admin login is not configured' });
       }
 
