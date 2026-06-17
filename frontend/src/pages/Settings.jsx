@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
 
 const USERS_API = `${API_BASE_URL}/api/users`;
+const REPAIRERS_API = `${API_BASE_URL}/api/repairers`;
 
 const emptyCreateForm = {
   fullName: '',
@@ -34,6 +35,12 @@ export default function Settings() {
     isActive: true,
     password: '',
   });
+  const [repairers, setRepairers] = useState([]);
+  const [repairersLoading, setRepairersLoading] = useState(true);
+  const [newRepairerName, setNewRepairerName] = useState('');
+  const [creatingRepairer, setCreatingRepairer] = useState(false);
+  const [editingRepairerId, setEditingRepairerId] = useState(null);
+  const [editRepairerName, setEditRepairerName] = useState('');
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -48,9 +55,106 @@ export default function Settings() {
     }
   }, []);
 
+  const loadRepairers = useCallback(async () => {
+    setRepairersLoading(true);
+    try {
+      const response = await axios.get(`${REPAIRERS_API}?all=true`);
+      setRepairers(response.data.repairers || []);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load repairer centers');
+    } finally {
+      setRepairersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadUsers();
-  }, [loadUsers]);
+    loadRepairers();
+  }, [loadUsers, loadRepairers]);
+
+  const handleCreateRepairer = async (event) => {
+    event.preventDefault();
+    setError('');
+    setMessage('');
+
+    const name = newRepairerName.trim();
+    if (!name) {
+      setError('Repairer center name is required');
+      return;
+    }
+
+    setCreatingRepairer(true);
+    try {
+      await axios.post(REPAIRERS_API, { name });
+      setNewRepairerName('');
+      setMessage('Repairer center added successfully');
+      await loadRepairers();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to add repairer center');
+    } finally {
+      setCreatingRepairer(false);
+    }
+  };
+
+  const startRepairerEdit = (repairer) => {
+    setEditingRepairerId(repairer.id);
+    setEditRepairerName(repairer.name);
+    setError('');
+    setMessage('');
+  };
+
+  const cancelRepairerEdit = () => {
+    setEditingRepairerId(null);
+    setEditRepairerName('');
+  };
+
+  const handleUpdateRepairer = async (event) => {
+    event.preventDefault();
+    setError('');
+    setMessage('');
+
+    const name = editRepairerName.trim();
+    if (!name) {
+      setError('Repairer center name is required');
+      return;
+    }
+
+    try {
+      await axios.patch(`${REPAIRERS_API}/${editingRepairerId}`, { name });
+      setMessage('Repairer center updated successfully');
+      cancelRepairerEdit();
+      await loadRepairers();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update repairer center');
+    }
+  };
+
+  const handleDeactivateRepairer = async (id) => {
+    if (!window.confirm('Remove this repairer center from the dropdown? Existing invoices will keep their saved repairer name.')) {
+      return;
+    }
+    setError('');
+    setMessage('');
+    try {
+      await axios.delete(`${REPAIRERS_API}/${id}`);
+      setMessage('Repairer center removed from dropdown');
+      await loadRepairers();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to remove repairer center');
+    }
+  };
+
+  const handleReactivateRepairer = async (id) => {
+    setError('');
+    setMessage('');
+    try {
+      await axios.patch(`${REPAIRERS_API}/${id}`, { isActive: true });
+      setMessage('Repairer center reactivated');
+      await loadRepairers();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to reactivate repairer center');
+    }
+  };
 
   const handleCreate = async (event) => {
     event.preventDefault();
@@ -160,7 +264,7 @@ export default function Settings() {
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-            <p className="text-sm text-gray-600">Manage application users</p>
+            <p className="text-sm text-gray-600">Manage users and repairer centers</p>
           </div>
           <div className="flex gap-3 text-sm">
             <Link to="/" className="text-red-600 hover:text-red-700 font-semibold">
@@ -370,6 +474,124 @@ export default function Settings() {
                               className="text-gray-600 hover:text-gray-800 font-medium"
                             >
                               Deactivate
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Repairer centers</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Centers added here appear in the Repairer Name dropdown for all users.
+            </p>
+          </div>
+
+          <div className="p-6 border-b border-gray-200">
+            <form onSubmit={handleCreateRepairer} className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="New repairer center name"
+                value={newRepairerName}
+                onChange={(e) => setNewRepairerName(e.target.value)}
+                className="flex-1 rounded-md border border-gray-300 px-3 py-2"
+              />
+              <button
+                type="submit"
+                disabled={creatingRepairer}
+                className="rounded-md bg-red-600 px-4 py-2 text-white font-semibold hover:bg-red-700 disabled:opacity-60"
+              >
+                {creatingRepairer ? 'Adding...' : 'Add center'}
+              </button>
+            </form>
+          </div>
+
+          {repairersLoading ? (
+            <p className="px-6 py-8 text-gray-500">Loading repairer centers...</p>
+          ) : repairers.length === 0 ? (
+            <p className="px-6 py-8 text-gray-500">No repairer centers yet. Add one above.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-left text-gray-600">
+                  <tr>
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {repairers.map((repairer) => (
+                    <tr key={repairer.id} className="border-t border-gray-100">
+                      <td className="px-4 py-3">
+                        {editingRepairerId === repairer.id ? (
+                          <form onSubmit={handleUpdateRepairer} className="flex gap-2">
+                            <input
+                              type="text"
+                              required
+                              value={editRepairerName}
+                              onChange={(e) => setEditRepairerName(e.target.value)}
+                              className="flex-1 rounded-md border border-gray-300 px-2 py-1"
+                            />
+                            <button
+                              type="submit"
+                              className="text-red-600 hover:text-red-700 font-medium"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelRepairerEdit}
+                              className="text-gray-600 hover:text-gray-800 font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </form>
+                        ) : (
+                          repairer.name
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {repairer.isActive ? (
+                          <span className="text-green-700">Active</span>
+                        ) : (
+                          <span className="text-gray-500">Hidden</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          {repairer.isActive && editingRepairerId !== repairer.id && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => startRepairerEdit(repairer)}
+                                className="text-red-600 hover:text-red-700 font-medium"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeactivateRepairer(repairer.id)}
+                                className="text-gray-600 hover:text-gray-800 font-medium"
+                              >
+                                Remove
+                              </button>
+                            </>
+                          )}
+                          {!repairer.isActive && (
+                            <button
+                              type="button"
+                              onClick={() => handleReactivateRepairer(repairer.id)}
+                              className="text-red-600 hover:text-red-700 font-medium"
+                            >
+                              Restore
                             </button>
                           )}
                         </div>

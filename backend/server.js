@@ -8,6 +8,7 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const repairerRoutes = require('./routes/repairerRoutes');
 const { authenticateToken } = require('./middleware/authMiddleware');
 
 const app = express();
@@ -40,6 +41,7 @@ app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/repairers', repairerRoutes);
 app.use('/api/invoices', authenticateToken, invoiceRoutes);
 app.use('/api/vehicles', authenticateToken, vehicleRoutes);
 
