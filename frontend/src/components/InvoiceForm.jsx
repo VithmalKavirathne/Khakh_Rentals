@@ -4,7 +4,7 @@ import axios from 'axios';
 import SignaturePad from './SignaturePad';
 import { API_BASE_URL } from '../config';
 
-const REPAIRERS = ['EPPING ACCIDENT REPAIR CENTER', 'ALZAKS PANELS'];
+const REPAIRERS_API = `${API_BASE_URL}/api/repairers`;
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const num = (v) => Number(v) || 0;
@@ -68,6 +68,8 @@ const InvoiceForm = () => {
     const [prevInvoiceNo, setPrevInvoiceNo] = useState('');
     const [signature, setSignature] = useState('');
     const [signResetKey, setSignResetKey] = useState(0);
+    const [repairers, setRepairers] = useState([]);
+    const [repairersLoading, setRepairersLoading] = useState(true);
 
     // Load the previous invoice number so it can be shown as a hint inside the box.
     const loadLatestInvoiceNo = async () => {
@@ -83,6 +85,22 @@ const InvoiceForm = () => {
 
     useEffect(() => {
         loadLatestInvoiceNo();
+    }, []);
+
+    const loadRepairers = async () => {
+        setRepairersLoading(true);
+        try {
+            const res = await axios.get(REPAIRERS_API);
+            setRepairers(Array.isArray(res.data?.repairers) ? res.data.repairers : []);
+        } catch {
+            setRepairers([]);
+        } finally {
+            setRepairersLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadRepairers();
     }, []);
 
     // Auto-calculate Total Days from Date Out / Date Return.
@@ -118,7 +136,7 @@ const InvoiceForm = () => {
                 }
 
                 const res = await axios.get(
-                    `${API_BASE_URL}/api/vehicles/${vehicleId}/availability?${params.toString()}`
+                    `${API_BASE_URL}/api/vehicles/id/${vehicleId}/availability?${params.toString()}`
                 );
 
                 if (cancelled) return;
@@ -448,10 +466,16 @@ const InvoiceForm = () => {
                             <label className="block text-sm font-medium text-gray-700">Repairer Name</label>
                             <select {...register('repairer.name')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border bg-white">
                                 <option value="">-- Select Repairer --</option>
-                                {REPAIRERS.map((r) => (
-                                    <option key={r} value={r}>{r}</option>
+                                {repairers.map((repairer) => (
+                                    <option key={repairer.id} value={repairer.name}>{repairer.name}</option>
                                 ))}
                             </select>
+                            {repairersLoading && (
+                                <p className="text-xs text-gray-500 mt-1">Loading repairer centers...</p>
+                            )}
+                            {!repairersLoading && repairers.length === 0 && (
+                                <p className="text-xs text-amber-600 mt-1">No repairer centers available. Ask an admin to add centers in Settings.</p>
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Repairer Phone</label>

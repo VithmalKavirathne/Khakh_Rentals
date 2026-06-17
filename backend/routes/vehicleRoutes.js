@@ -8,8 +8,8 @@ router.get('/', vehicleController.listVehicles);
 // Register (or update) a vehicle
 router.post('/', vehicleController.registerVehicle);
 
-// Check rental availability for a vehicle (numeric id only — before registration lookup)
-router.get('/:vehicleId(\\d+)/availability', vehicleController.checkAvailability);
+// Check rental availability for a vehicle (before registration lookup route)
+router.get('/id/:vehicleId/availability', vehicleController.checkAvailability);
 
 // Look up a single vehicle by registration (for invoice auto-fill)
 router.get('/:registration', vehicleController.getVehicleByRegistration);
