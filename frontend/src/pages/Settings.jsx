@@ -170,7 +170,7 @@ export default function Settings() {
               type="button"
               onClick={() => {
                 logout();
-                navigate('/login');
+                navigate('/');
               }}
               className="text-gray-600 hover:text-gray-800 font-semibold"
             >
