@@ -101,31 +101,31 @@ pm2 startup
 
 ## Part 3 — Frontend on Hostinger
 
-### Option A — hPanel Frontend Web App (repo root — recommended for Git deploy)
+### Option A — hPanel Frontend Web App (output `frontend/dist`) **recommended**
 
-1. **Websites** → **Add Website** → **Frontend web app** (or static site).
-2. Connect the same GitHub repo.
-3. Configure:
+1. **Websites** → your frontend site → **Settings and redeploy**.
+2. Connect GitHub repo `VithmalKavirathne/Khakh_Rentals`, branch **`main`**.
 
 | Setting | Value |
 |---------|--------|
-| **Root directory** | `.` (repository root) |
-| **Build command** | `npm install && npm run build` |
-| **Output directory** | `dist` |
-| **Framework** | Vite (or React) |
+| **Framework** | React |
+| **Root directory** | `./` |
+| **Build command** | `npm run build:frontend` |
+| **Output directory** | `frontend/dist` |
+| **Node.js version** | 22.x |
 
-The root `npm run build` builds the React app and copies `frontend/dist` → `dist` for Hostinger.
+Do **not** use `npm run postinstall` as the build command — that only installs backend packages and does not build React.
 
-4. **Environment variable (required at build time):**
+3. **Environment variable (build time):**
 
 | Key | Value |
 |-----|--------|
-| `VITE_API_URL` | `https://palevioletred-frog-869231.hostingersite.com` (your backend URL, no trailing slash) |
+| `VITE_API_URL` | `https://palevioletred-frog-869231.hostingersite.com` (no trailing slash) |
 
-5. Click **Redeploy** and wait for success (no `No output directory found` error).
-6. Hard-refresh the site (Ctrl+Shift+R) and open `/login`.
+4. **Save** → **Redeploy**. Build log should show `vite build` completing successfully.
+5. Hard-refresh (Ctrl+Shift+R) and open `/login`.
 
-### Option A2 — hPanel Frontend Web App (`frontend` folder)
+### Option A2 — Same output, root directory `frontend`
 
 | Setting | Value |
 |---------|--------|
@@ -133,7 +133,17 @@ The root `npm run build` builds the React app and copies `frontend/dist` → `di
 | **Build command** | `npm install && npm run build` |
 | **Output directory** | `dist` |
 
-Same `VITE_API_URL` as above.
+Same `VITE_API_URL` as above. (Hostinger publishes `frontend/dist` — equivalent to this layout.)
+
+### Option A3 — Output root `dist` (alternative)
+
+| Setting | Value |
+|---------|--------|
+| **Root directory** | `./` |
+| **Build command** | `npm install && npm run build` |
+| **Output directory** | `dist` |
+
+Root `npm run build` runs Vite then copies `frontend/dist` → `dist`.
 
 ### Option B — Manual upload (any Hostinger plan with static hosting)
 
@@ -179,7 +189,7 @@ Templates: `deploy/hostinger/backend.env.example` and `deploy/hostinger/frontend
 | Problem | Fix |
 |---------|-----|
 | Frontend can't reach API | Check `VITE_API_URL` and **rebuild** frontend |
-| **`No output directory found after build`** | Root directory must be `.` with output `dist`, OR root `frontend` with output `dist`. Root deploy needs latest `npm run build` (copies to `/dist`) |
+| **`No output directory found after build`** | Use build `npm run build:frontend` with output `frontend/dist`, or `npm run build` with output `dist` — not `npm run postinstall` |
 | CORS error | `FRONTEND_URL` must exactly match frontend URL (`https://...`) |
 | Database error | Use Supabase **pooler** URI (port 6543), correct password |
 | PDF fails on VPS | Install Chromium deps (see VPS section) |
