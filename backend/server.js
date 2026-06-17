@@ -5,6 +5,9 @@ const { getDatabaseEnvCheck } = require('./config/env');
 const db = require('./db');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const { authenticateToken } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,8 +37,10 @@ app.use(
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/invoices', authenticateToken, invoiceRoutes);
+app.use('/api/vehicles', authenticateToken, vehicleRoutes);
 
 app.get('/', (req, res) => {
     res.status(200).json({

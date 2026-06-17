@@ -1,51 +1,36 @@
-import React, { useState } from 'react';
-import InvoiceForm from './components/InvoiceForm';
-import InvoiceList from './components/InvoiceList';
-import DeletedInvoiceList from './components/DeletedInvoiceList';
-import VehicleManager from './components/VehicleManager';
-import logo from './assets/logo.png';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import MainLayout from './layouts/MainLayout';
+import Login from './pages/Login';
+import Settings from './pages/Settings';
 
-function App() {
-  const [view, setView] = useState('create');
-
-  const tabClass = (tab) =>
-    `px-5 py-2.5 rounded-md text-sm font-semibold transition-colors ${
-      view === tab
-        ? 'bg-red-600 text-white shadow'
-        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-    }`;
-
+export default function App() {
   return (
-    <div className="min-h-screen bg-gray-100 py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center mb-8">
-          <div className="bg-black rounded-xl px-10 py-4 shadow-lg">
-            <img src={logo} alt="KHAKH RENTALS" className="h-28 w-auto" />
-          </div>
-        </div>
-
-        <div className="flex justify-center gap-3 mb-8">
-          <button type="button" onClick={() => setView('create')} className={tabClass('create')}>
-            Create Invoice
-          </button>
-          <button type="button" onClick={() => setView('log')} className={tabClass('log')}>
-            Invoice Log
-          </button>
-          <button type="button" onClick={() => setView('vehicles')} className={tabClass('vehicles')}>
-            Vehicles
-          </button>
-          <button type="button" onClick={() => setView('deleted')} className={tabClass('deleted')}>
-            Deleted Log
-          </button>
-        </div>
-
-        {view === 'create' && <InvoiceForm />}
-        {view === 'log' && <InvoiceList />}
-        {view === 'vehicles' && <VehicleManager />}
-        {view === 'deleted' && <DeletedInvoiceList />}
-      </div>
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <AdminRoute>
+                <Settings />
+              </AdminRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
-
-export default App;
