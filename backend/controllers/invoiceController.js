@@ -1,35 +1,71 @@
 const db = require('../db');
 const { generateInvoicePDF } = require('../services/pdfService');
+const {
+    assertVehicleAvailable,
+    buildConflictPayload,
+} = require('../services/rentalOverlap');
+
 const cleanDate = (dateString) => (dateString && dateString.trim() !== "") ? dateString : null;
+
+function normalizeInvoicePayload(data) {
+    const toNumber = (value, fallback = 0) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    data.repairer = data.repairer || {};
+    data.thirdParty = data.thirdParty || {};
+    data.inspection = data.inspection || {};
+    data.billing = data.billing || {};
+    data.billing.dailyRentalDays = toNumber(data.billing.dailyRentalDays);
+    data.billing.dailyRentalRate = toNumber(data.billing.dailyRentalRate);
+    data.billing.excessReductionDays = toNumber(data.billing.excessReductionDays);
+    data.billing.excessReductionRate = toNumber(data.billing.excessReductionRate);
+    data.billing.registrationRecoveryDays = toNumber(data.billing.registrationRecoveryDays);
+    data.billing.registrationRecoveryRate = toNumber(data.billing.registrationRecoveryRate);
+    data.billing.deliveryCharge = toNumber(data.billing.deliveryCharge);
+    data.billing.subTotal = toNumber(data.billing.subTotal);
+    data.billing.gst = toNumber(data.billing.gst);
+    data.billing.grandTotal = toNumber(data.billing.grandTotal);
+
+    return data;
+}
+
+async function resolveVehicleId(client, vehicle) {
+    await client.query(
+        `INSERT INTO vehicles (make, model, colour, registration) VALUES ($1, $2, $3, $4) ON CONFLICT (registration) DO NOTHING`,
+        [vehicle.make, vehicle.model, vehicle.colour, vehicle.registration]
+    );
+    const vehicleRes = await client.query(`SELECT id FROM vehicles WHERE registration = $1`, [vehicle.registration]);
+    return vehicleRes.rows[0]?.id ?? null;
+}
 
 exports.createInvoice = async (req, res) => {
     const client = await db.pool.connect();
-    const data = req.body;
+    const data = normalizeInvoicePayload({ ...req.body });
     let invoiceId;
 
     try {
+        if (!data.vehicle?.registration?.trim()) {
+            return res.status(400).json({ error: 'Vehicle registration is required' });
+        }
+
+        const vehicleId = await resolveVehicleId(client, data.vehicle);
+        const availability = await assertVehicleAvailable(client, {
+            vehicleId,
+            dateOut: cleanDate(data.rental?.dateOut),
+            dateReturn: cleanDate(data.rental?.dateReturn),
+            excludeInvoiceNo: data.invoiceNo,
+        });
+
+        if (!availability.ok) {
+            const body = availability.status === 409
+                ? buildConflictPayload(availability.conflict)
+                : { error: availability.error };
+            return res.status(availability.status).json(body);
+        }
+
         await client.query('BEGIN');
-
-        const toNumber = (value, fallback = 0) => {
-            const parsed = Number(value);
-            return Number.isFinite(parsed) ? parsed : fallback;
-        };
-
-        // Normalize optional sections and numeric billing fields used by DB + PDF template.
-        data.repairer = data.repairer || {};
-        data.thirdParty = data.thirdParty || {};
-        data.inspection = data.inspection || {};
-        data.billing = data.billing || {};
-        data.billing.dailyRentalDays = toNumber(data.billing.dailyRentalDays);
-        data.billing.dailyRentalRate = toNumber(data.billing.dailyRentalRate);
-        data.billing.excessReductionDays = toNumber(data.billing.excessReductionDays);
-        data.billing.excessReductionRate = toNumber(data.billing.excessReductionRate);
-        data.billing.registrationRecoveryDays = toNumber(data.billing.registrationRecoveryDays);
-        data.billing.registrationRecoveryRate = toNumber(data.billing.registrationRecoveryRate);
-        data.billing.deliveryCharge = toNumber(data.billing.deliveryCharge);
-        data.billing.subTotal = toNumber(data.billing.subTotal);
-        data.billing.gst = toNumber(data.billing.gst);
-        data.billing.grandTotal = toNumber(data.billing.grandTotal);
 
         // 1. Insert Driver
         const driverRes = await client.query(
@@ -39,16 +75,7 @@ exports.createInvoice = async (req, res) => {
         );
         const driverId = driverRes.rows[0].id;
 
-        // 2. Insert Vehicle (Handle duplicates by updating or just simple insert if new)
-        // Here we just insert on conflict do nothing and fetch
-        await client.query(
-            `INSERT INTO vehicles (make, model, colour, registration) VALUES ($1, $2, $3, $4) ON CONFLICT (registration) DO NOTHING`,
-            [data.vehicle.make, data.vehicle.model, data.vehicle.colour, data.vehicle.registration]
-        );
-        const vehicleRes = await client.query(`SELECT id FROM vehicles WHERE registration = $1`, [data.vehicle.registration]);
-        const vehicleId = vehicleRes.rows[0].id;
-
-        // 3. Insert/Update Invoice (upsert on invoice_no so corrections can be re-downloaded)
+        // 2. Insert/Update Invoice (upsert on invoice_no so corrections can be re-downloaded)
         const invoiceRes = await client.query(
             `INSERT INTO invoices (
         invoice_no, third_party_claim_no, invoice_date, client_registration, 
@@ -136,12 +163,22 @@ exports.createInvoice = async (req, res) => {
         await client.query('COMMIT');
     } catch (error) {
         console.error('DETAILED ERROR:', error);
-        await client.query('ROLLBACK');
+        try {
+            await client.query('ROLLBACK');
+        } catch {
+            // ignore rollback errors when no transaction is open
+        }
         console.error('Error creating invoice:', error);
 
         if (error.code === '23505' && error.constraint === 'invoices_invoice_no_key') {
             return res.status(409).json({
                 error: `Invoice number "${req.body && req.body.invoiceNo}" already exists. Please use a unique invoice number.`
+            });
+        }
+
+        if (error.code === '23P01') {
+            return res.status(409).json({
+                error: 'Vehicle is already rented for the selected dates',
             });
         }
 

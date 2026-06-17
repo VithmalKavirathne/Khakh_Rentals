@@ -10,6 +10,41 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 const num = (v) => Number(v) || 0;
 const money = (v) => `$${num(v).toFixed(2)}`;
 
+const formatRentalConflictMessage = (conflict) => {
+    if (!conflict) {
+        return 'Vehicle is already rented for the selected dates. Please choose another vehicle or different dates.';
+    }
+    return `Vehicle is already rented from ${conflict.dateOut} to ${conflict.dateReturn} on invoice ${conflict.invoiceNo}. Please choose another vehicle or different dates.`;
+};
+
+const parseInvoiceError = async (error) => {
+    let message = 'Failed to generate invoice. Please try again.';
+    const errData = error?.response?.data;
+
+    if (errData instanceof Blob) {
+        try {
+            const parsed = JSON.parse(await errData.text());
+            if (parsed?.conflict) {
+                return formatRentalConflictMessage(parsed.conflict);
+            }
+            if (parsed?.error) {
+                return parsed.error;
+            }
+        } catch {
+            return message;
+        }
+    }
+
+    if (errData?.conflict) {
+        return formatRentalConflictMessage(errData.conflict);
+    }
+    if (errData?.error) {
+        return errData.error;
+    }
+
+    return message;
+};
+
 const InvoiceForm = () => {
     const defaultValues = {
         invoiceDate: todayStr(),
@@ -28,6 +63,8 @@ const InvoiceForm = () => {
     const [errorMsg, setErrorMsg] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [regLookupMsg, setRegLookupMsg] = useState('');
+    const [vehicleId, setVehicleId] = useState(null);
+    const [availabilityMsg, setAvailabilityMsg] = useState('');
     const [prevInvoiceNo, setPrevInvoiceNo] = useState('');
     const [signature, setSignature] = useState('');
     const [signResetKey, setSignResetKey] = useState(0);
@@ -51,12 +88,62 @@ const InvoiceForm = () => {
     // Auto-calculate Total Days from Date Out / Date Return.
     const dateOut = watch('rental.dateOut');
     const dateReturn = watch('rental.dateReturn');
+    const invoiceNo = watch('invoiceNo');
+    const registration = watch('vehicle.registration');
     useEffect(() => {
         if (dateOut && dateReturn) {
             const diff = Math.round((new Date(dateReturn) - new Date(dateOut)) / 86400000);
             setValue('rental.totalDays', diff > 0 ? diff : 0);
         }
     }, [dateOut, dateReturn, setValue]);
+
+    useEffect(() => {
+        setVehicleId(null);
+        setAvailabilityMsg('');
+    }, [registration]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        if (!vehicleId || !dateOut || !dateReturn) {
+            setAvailabilityMsg('');
+            return undefined;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const params = new URLSearchParams({ dateOut, dateReturn });
+                if (invoiceNo?.trim()) {
+                    params.set('excludeInvoiceNo', invoiceNo.trim());
+                }
+
+                const res = await axios.get(
+                    `${API_BASE_URL}/api/vehicles/${vehicleId}/availability?${params.toString()}`
+                );
+
+                if (cancelled) return;
+
+                if (!res.data?.available) {
+                    setAvailabilityMsg(
+                        res.data?.conflict
+                            ? formatRentalConflictMessage(res.data.conflict)
+                            : (res.data?.message || 'Vehicle is not available for these dates.')
+                    );
+                } else {
+                    setAvailabilityMsg('');
+                }
+            } catch {
+                if (!cancelled) {
+                    setAvailabilityMsg('');
+                }
+            }
+        }, 400);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+    }, [vehicleId, dateOut, dateReturn, invoiceNo]);
 
     // Keep Billing day fields (Daily / Excess / Rego) in sync with Total Days.
     const totalDays = watch('rental.totalDays');
@@ -94,6 +181,8 @@ const InvoiceForm = () => {
         setErrorMsg('');
         setSuccessMsg('');
         setRegLookupMsg('');
+        setVehicleId(null);
+        setAvailabilityMsg('');
         setSignature('');
         setSignResetKey((k) => k + 1);
     };
@@ -103,16 +192,19 @@ const InvoiceForm = () => {
         const rego = (registration || '').trim();
         if (!rego) {
             setRegLookupMsg('');
+            setVehicleId(null);
             return;
         }
         try {
             const res = await axios.get(`${API_BASE_URL}/api/vehicles/${encodeURIComponent(rego)}`);
             const v = res.data;
+            setVehicleId(v.id || null);
             setValue('vehicle.make', v.make || '', { shouldValidate: true });
             setValue('vehicle.model', v.model || '', { shouldValidate: true });
             setValue('vehicle.colour', v.colour || '', { shouldValidate: true });
             setRegLookupMsg('Registered vehicle found — details filled automatically.');
         } catch (error) {
+            setVehicleId(null);
             if (error?.response?.status === 404) {
                 setRegLookupMsg('No registered vehicle for this number. Enter details manually or register it under the Vehicles tab.');
             } else {
@@ -179,22 +271,7 @@ const InvoiceForm = () => {
             setTimeout(() => setSuccessMsg(''), 7000);
         } catch (error) {
             console.error('Error generating invoice:', error);
-
-            // The request expects a PDF blob, so error responses also arrive as a Blob.
-            // Parse it back to JSON to surface the real backend message (e.g. duplicate invoice no).
-            let message = 'Failed to generate invoice. Please try again.';
-            const errData = error?.response?.data;
-            if (errData instanceof Blob) {
-                try {
-                    const parsed = JSON.parse(await errData.text());
-                    if (parsed?.error) message = parsed.error;
-                } catch {
-                    // keep the default message if the body is not JSON
-                }
-            } else if (errData?.error) {
-                message = errData.error;
-            }
-            setErrorMsg(message);
+            setErrorMsg(await parseInvoiceError(error));
         } finally {
             setIsLoading(false);
         }
@@ -353,6 +430,11 @@ const InvoiceForm = () => {
                     <label className="block text-sm font-medium text-gray-700">Total Days</label>
                     <input type="number" {...register('rental.totalDays')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border bg-gray-50" />
                 </div>
+                {availabilityMsg && (
+                    <div className="md:col-span-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        {availabilityMsg}
+                    </div>
+                )}
             </div>
 
             {/* Repairer & Third Party Details */}

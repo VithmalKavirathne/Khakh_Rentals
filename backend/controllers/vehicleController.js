@@ -1,4 +1,5 @@
 const db = require('../db');
+const { checkVehicleAvailability } = require('../services/rentalOverlap');
 
 // GET /api/vehicles -> list all registered vehicles
 exports.listVehicles = async (req, res) => {
@@ -65,6 +66,33 @@ exports.registerVehicle = async (req, res) => {
     } catch (error) {
         console.error('Error registering vehicle:', error);
         res.status(500).json({ error: 'Failed to register vehicle' });
+    }
+};
+
+// GET /api/vehicles/:vehicleId/availability -> check rental date overlap for a vehicle
+exports.checkAvailability = async (req, res) => {
+    const client = await db.pool.connect();
+    try {
+        const vehicleId = Number(req.params.vehicleId);
+        if (!Number.isFinite(vehicleId) || vehicleId <= 0) {
+            return res.status(400).json({ error: 'Valid vehicle id is required' });
+        }
+
+        const { dateOut, dateReturn, excludeInvoiceId, excludeInvoiceNo } = req.query;
+        const result = await checkVehicleAvailability(client, {
+            vehicleId,
+            dateOut,
+            dateReturn,
+            excludeInvoiceId,
+            excludeInvoiceNo,
+        });
+
+        return res.json(result);
+    } catch (error) {
+        console.error('Error checking vehicle availability:', error);
+        return res.status(500).json({ error: 'Failed to check vehicle availability' });
+    } finally {
+        client.release();
     }
 };
 

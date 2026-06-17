@@ -93,6 +93,11 @@ CREATE TABLE IF NOT EXISTS billing_breakdowns (
 CREATE INDEX IF NOT EXISTS idx_billing_breakdowns_invoice_id
     ON billing_breakdowns(invoice_id);
 
+CREATE INDEX IF NOT EXISTS idx_invoices_vehicle_rental_dates
+    ON invoices (vehicle_id, date_out, date_return);
+
+-- Optional DB-level overlap prevention (see migrations/003_prevent_overlapping_rentals.sql)
+
 -- 5. Deleted invoices archive
 CREATE TABLE IF NOT EXISTS deleted_invoices (
     id SERIAL PRIMARY KEY,
